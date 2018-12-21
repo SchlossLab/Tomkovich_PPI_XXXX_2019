@@ -17,34 +17,55 @@
 library(tidyverse)
 library(readxl)
 
-shared_sample_names <- read.table('data/mothur/stability.opti_mcc.0.03.subsample.shared', sep = '\t', header = T, stringsAsFactors = F) %>% 
-	select(group = Group) # select column with sample names of shared file which we will need to match our metadata to
+shared_sample_names <- read.table('data/mothur/stability.opti_mcc.0.03.subsample.shared', 
+		sep = '\t', header = T, stringsAsFactors = F) %>% 
+	select(Group) # select column with sample names of shared file which we will need to match our metadata to
 
+# load in all the names and positions of the sequence sample names
 seq_plate_map <- 'data/raw/SarahPPiNov2018_plateMap.xlsx'
-all_samples_seq <- bind_rows(
+seq_sample_names <- bind_rows(
 		mutate(read_xlsx(seq_plate_map, sheet = 'Final Plate Map', range = 'C5:O13'), plate = 1),
 		mutate(read_xlsx(seq_plate_map, sheet = 'Final Plate Map', range = 'C16:O24'), plate = 2),
 		mutate(read_xlsx(seq_plate_map, sheet = 'Final Plate Map', range = 'C27:O35'), plate = 3),
 		mutate(read_xlsx(seq_plate_map, sheet = 'Final Plate Map', range = 'C39:O47'), plate = 4)) %>%
 	rename(row = X__1) %>%
-	gather(column, sample, -row, -plate) #%>%
-#	mutate(day = as.numeric(str_match(sample, '(?<=D)\\d{1,2}')),
-#		mouse = as.numeric(str_match(sample, '(?<=M)\\d{1,2}')),
-#		treatment = str_match(sample, '[:alpha:]{1,2}(?=pos)'),
-#		sample_id = paste(treatment, mouse, day, sep = '_'))
+	gather(column, seq_sample, -row, -plate) %>%
+	mutate(seq_day = as.numeric(str_match(seq_sample, '(?<=D)\\d{1,2}')),
+		seq_mouse = as.numeric(str_match(seq_sample, '(?<=M)\\d{1,2}')),
+		seq_treatment = str_match(seq_sample, '[:alpha:]{1,2}(?=pos)'),
+		seq_sample_id = paste(seq_treatment, seq_mouse, seq_day, sep = '_'))
+# load in all the names and positions of the extraction plates
 extraction123 <- 'data/raw/Extraction Template_Plate #1#2#3.xlsx'
 extraction4 <- 'data/raw/Plate_4_Sarah_Omep2Box1.xlsx'
-all_samples_extraction <- bind_rows(
+ext_sample_names <- bind_rows(
 		mutate(read_xlsx(extraction123, sheet = 'Plate 1', range = 'A2:L9', col_names = F), row = LETTERS[1:8], plate = 1),
 		mutate(read_xlsx(extraction123, sheet = 'Plate 2', range = 'A3:L10', col_names = F), row = LETTERS[1:8], plate = 2),
 		mutate(read_xlsx(extraction123, sheet = 'Plate 3', range = 'B4:M11', col_names = F), row = LETTERS[1:8], plate = 3),
 		mutate(read_xlsx(extraction4, sheet = 'Sheet1', range = 'A1:L8', col_names = F), row = LETTERS[1:8], plate = 4)) %>%
-	gather(column, sample, -row, -plate) %>%
-	mutate(column = gsub('X__', '', column))#, 
-#		day = as.numeric(str_match(sample, '(?<=D)\\d{1,2}')),
-#		mouse = as.numeric(str_match(sample, '(?<=M)\\d{1,2}')),
-#		treatment = str_match(sample, '[:alpha:]{1,2}(?=\\+)'),
-#		sample_id = paste(treatment, mouse, day, sep = '_'))
+	gather(column, ext_sample, -row, -plate) %>%
+	mutate(column = gsub('X__', '', column), 
+		ext_day = as.numeric(str_match(ext_sample, '(?<=D)\\d{1,2}')),
+		ext_mouse = as.numeric(str_match(ext_sample, '(?<=M)\\d{1,2}')),
+		ext_treatment = str_match(ext_sample, '[:alpha:]{1,2}(?=\\+)'),
+		ext_sample_id = paste(ext_treatment, ext_mouse, ext_day, sep = '_'))
+# check to see if all ext and seq samples match
+fixed_shared_names <- full_join(seq_sample_names, ext_sample_names, by = c('row', 'column', 'plate')) %>%
+	# find which samples don't match between their seqencing and their extraction
+	mutate(match = seq_sample_id == ext_sample_id) %>%
+	filter(match == F) %>%
+	select(seq_sample, ext_sample, ext_treatment, ext_mouse, ext_day) %>%
+	# convert names of seq to match the format of the shared samples
+	mutate(shared_names = gsub('^_{1,3}','', seq_sample),
+		shared_names = gsub('_', '+', shared_names),
+		shared_names = gsub('pos', 'POS', shared_names)) %>% 
+	# select only the samples that are present in the shared data
+	inner_join(shared_sample_names, by = c('shared_names' = 'Group')) %>%
+	mutate(new_shared_names = paste0(ext_treatment, 'POS+M', ext_mouse, '+D', ext_day)) %>%
+	select(shared_names, new_shared_names)
+
+shared_sample_names <- shared_sample_names %>%
+	full_join(fixed_shared_names, by = c('Group' = 'shared_names')) %>%
+	mutate(shared_samples = ifelse(is.na(new_shared_names), Group, new_shared_names))
 
 sample_id_df <- data.frame(group = shared$group, stringsAsFactors = F) %>% 
 	mutate(sample_id = gsub("\\+", "\\_", group), # change separator, don't necessarily need to
