@@ -50,14 +50,16 @@ ext_sample_names <- bind_rows(
 		ext_sample_id = paste(ext_treatment, ext_mouse, ext_day, sep = '_'))
 # check to see if all ext and seq samples match
 fixed_shared_names <- full_join(seq_sample_names, ext_sample_names, by = c('row', 'column', 'plate')) %>%
-	# find which samples don't match between their seqencing and their extraction
-	mutate(match = seq_sample_id == ext_sample_id) %>%
-	filter(match == F) %>%
+	# find which samples don't match between their seqencing and their extraction (or were labeled with unknown)
+	mutate(match = seq_sample_id == ext_sample_id,
+		match = ifelse(grepl('U|u', seq_sample), FALSE, match)) %>%
+	filter(match == F) %>% 
 	select(seq_sample, ext_sample, ext_treatment, ext_mouse, ext_day) %>%
 	# convert names of seq to match the format of the shared samples
 	mutate(shared_names = gsub('^_{1,3}','', seq_sample),
 		shared_names = gsub('_', '+', shared_names),
-		shared_names = gsub('pos', 'POS', shared_names)) %>% 
+		shared_names = gsub('pos', 'POS', shared_names),
+		shared_names = gsub('Unk|unk', 'UNK', shared_names)) %>% 
 	# select only the samples that are present in the shared data
 	inner_join(shared_sample_names, by = c('shared_names' = 'Group')) %>%
 	mutate(new_shared_names = paste0(ext_treatment, 'POS+M', ext_mouse, '+D', ext_day)) %>%
@@ -67,7 +69,7 @@ shared_sample_names <- shared_sample_names %>%
 	full_join(fixed_shared_names, by = c('Group' = 'shared_names')) %>%
 	mutate(shared_samples = ifelse(is.na(new_shared_names), Group, new_shared_names))
 
-sample_id_df <- data.frame(group = shared$group, stringsAsFactors = F) %>% 
+sample_id_df <- shared_sample_names %>% 
 	mutate(sample_id = gsub("\\+", "\\_", group), # change separator, don't necessarily need to
 		sample_id = gsub('^M', 'NAPOS_M', sample_id)) %>% # add NA to samples missing label treatment
 	filter(grepl('POS', sample_id)) %>% # remove sequencing or unlabeled samples
