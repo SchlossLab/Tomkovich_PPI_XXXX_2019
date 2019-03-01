@@ -79,13 +79,13 @@ sample_id_df <- shared_sample_names %>%
 #######
 #
 ## load the metafile originally recording the data to check out sequence labels against
-#true_data <- read_xlsx('data/raw/PPI_Exp_Sample_List_2018.xlsx', sheet = 'Sheet1') %>% 
-#	rename(ExpNumber = 'Exp. #', CollectionDay = 'Collection D', CageNumber = 'Cage #', 
-#		M_F = 'M/F', OmpDailyDose = 'Omp. Daily Dose', MouseID = 'Mouse ID', TubeDayLabel = 'Tube label__1') %>% 
-#	# Collection Day is shifted for Exp 2 from Day 4 to 7, so use tube label for day
-#	mutate(day = as.numeric(gsub('D', '', CollectionDay)),
-# 		treatment = gsub('\\+', '', Group),
-# 		sample_id = paste(treatment, MouseID, day, sep = '_'))
+true_data <- read_xlsx('data/raw/PPI_Exp_Sample_List_2018.xlsx', sheet = 'Sheet1') %>% 
+	rename(ExpNumber = 'Exp. #', CollectionDay = 'Collection D', CageNumber = 'Cage #', 
+		M_F = 'M/F', OmpDailyDose = 'Omp. Daily Dose', MouseID = 'Mouse ID', TubeDayLabel = 'Tube label__1') %>% 
+	# Collection Day is shifted for Exp 2 from Day 4 to 7, so use tube label for day
+	mutate(day = as.numeric(gsub('D', '', CollectionDay)),
+ 		treatment = gsub('\\+', '', Group),
+ 		sample_id = paste(treatment, MouseID, day, sep = '_'))
 #	# if going by collection day, two entries for C_M14_D7, looks to be a shifted copy/paste entry error beginning day 4 of exp 2
 #	# in column Collection Day, D6 begins a line early (C14, whereas all others outside of D4-7 starts on O1)
 #
@@ -150,10 +150,11 @@ exp_2_wt <- exp_2_data %>%
 exp_2_cdiff <- exp_2_data %>%
 	select(treatment, mouse, contains('difficile')) %>%
 	gather(day, cfu, -treatment, -mouse) %>%
-	mutate(day = as.numeric(str_match(day, '\\d{1,2}')))
+	mutate(day = as.numeric(str_match(day, '\\d{1,2}')),
+		experiment = 2)
 
 output_df <- full_join(sample_id_df,
-	exp_2_cdiff, by = c('treatment', 'mouse', 'day'))
+	exp_2_cdiff, by = c('treatment', 'mouse', 'day', 'experiment'))
 
 write.table(exp_2_wt, 'data/process/exp_2_weight.txt', 
 	row.names = F, quote = F, sep = '\t')
