@@ -49,7 +49,7 @@ ext_sample_names <- bind_rows(
 # check to see if all ext and seq samples match
 fixed_shared_names <- full_join(seq_sample_names, ext_sample_names, by = c('row', 'column', 'plate')) %>%
 	# find which samples don't match between their seqencing and their extraction (or were labeled with unknown)
-	mutate(match = seq_sample_id == ext_sample_id,
+	mutate(match = seq_sample == ext_sample_id,
 		match = ifelse(grepl('U|u', seq_sample), FALSE, match)) %>%
 	filter(match == F) %>% 
 	select(seq_sample, ext_sample, ext_treatment, ext_mouse, ext_day) %>%
