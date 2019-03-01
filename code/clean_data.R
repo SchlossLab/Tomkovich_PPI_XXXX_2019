@@ -3,9 +3,11 @@
 # clean up labeling issues with data - Treat mice with abx/PPI and challenge with C difficile
 # 
 # input:
-#	stability.opti_mcc.0.03.subsample.shared
+#	data/mothur/stability.opti_mcc.0.03.subsample.shared
 #	PPI_Exp_Sample_List_2018.xlsx
-#
+#	data/raw/Extraction Template_Plate #1#2#3.xlsx
+#	data/raw/Plate_4_Sarah_Omep2Box1.xlsx
+#	data/raw/SarahPPiNov2018_plateMap.xlsx
 #
 #
 # output:
