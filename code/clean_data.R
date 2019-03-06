@@ -111,9 +111,18 @@ experiment_number <- true_data %>%
 #
 ## what samples are duplicated
 #table(sample_id_df$sample_id) %>% data.frame %>% filter(Freq > 1)
+
 #	# 			Freq
 #	#	C_14_7    2 <- two positions on extraction 4 plate marked same
+########	looking at the picture of the tubes 
+#				plate 4 row 3 column 5(E) C+ M13 D7
+#				plate 4 row 6 column 9(I) C+ M14 D7
+
 #	#	CO_8_0    2 <- two positions on extraction 4 plate marked same
+########	looking at the picture of the tubes 
+#				plate 4 row 5 column 5(E) CO+ M8 D0
+#				plate 4 row 6 column 9(I) CO+ M9 D0
+
 #
 ## which mice were in each treatment
 #mutate(sample_id_df, mice_id = paste(treatment, mouse, sep = '_')) %>%
