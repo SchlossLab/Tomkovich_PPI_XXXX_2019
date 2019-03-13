@@ -1,4 +1,4 @@
-make.file(inputdir=data/raw, type=gz, prefix=stability)
+make.file(inputdir=data/raw, type=fastq, prefix=ppi)
 make.contigs(file=current, inputdir=data/raw/, outputdir=data/mothur/, processors=8)
 screen.seqs(fasta=current, group=current, maxambig=0, maxlength=275, maxhomop=8)
 unique.seqs(fasta=current)
