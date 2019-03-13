@@ -65,8 +65,7 @@ $(REFS)/trainset16_022016.% :
 #
 ################################################################################
 
-# Change stability to the * part of your *.files file that lives in data/raw/
-BASIC_STEM = data/mothur/stability.trim.contigs.good.unique.good.filter.unique.precluster
+BASIC_STEM = data/mothur/ppi.trim.contigs.good.unique.good.filter.unique.precluster
 
 
 # here we go from the raw fastq files and the files file to generate a fasta,
