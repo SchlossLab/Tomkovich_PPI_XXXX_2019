@@ -48,9 +48,9 @@ YOUR PAPER'S ABSTRACT GOES HERE
 ### How to regenerate this repository
 
 #### Dependencies and locations
-* Gnu Make should be located in the user's PATH
-* mothur (v1.XX.0) should be located in the user's PATH
-* R (v. 3.X.X) should be located in the user's PATH
+* Gnu Make (v4.2) should be located in the user's PATH
+* mothur (v1.40.5) should be located in the user's PATH
+* R (v. 3.5.1) should be located in the user's PATH
 * R packages:
   * `knitr`
   * `rmarkdown`
@@ -60,6 +60,6 @@ YOUR PAPER'S ABSTRACT GOES HERE
 #### Running analysis
 
 ```
-git clone https://github.com/SchlossLab/LastName_BriefDescription_Journal_Year.git
+git clone https://github.com/SchlossLab/Tomkovich_PPI_XXXX_2019
 make write.paper
 ```
