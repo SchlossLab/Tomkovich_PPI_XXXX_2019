@@ -82,10 +82,14 @@ sample_id_df <- shared_sample_names %>%
 true_data <- read_xlsx('data/raw/PPI_Exp_Sample_List_2018.xlsx', sheet = 'Sheet1') %>% 
 	rename(ExpNumber = 'Exp. #', CollectionDay = 'Collection D', CageNumber = 'Cage #', 
 		M_F = 'M/F', OmpDailyDose = 'Omp. Daily Dose', MouseID = 'Mouse ID', TubeDayLabel = 'Tube label__1') %>% 
+	filter(ExpNumber != 'NA') %>% 
 	# Collection Day is shifted for Exp 2 from Day 4 to 7, so use tube label for day
 	mutate(day = as.numeric(gsub('D', '', CollectionDay)),
  		treatment = gsub('\\+', '', Group),
- 		sample_id = paste(treatment, MouseID, day, sep = '_'))
+ 		sample_id = paste(treatment, MouseID, day, sep = '_'),
+ 		OmpDailyDose = as.numeric(OmpDailyDose),
+ 		experiment = OmpDailyDose/20,
+ 		mouse = as.numeric(MouseID))
 #	# if going by collection day, two entries for C_M14_D7, looks to be a shifted copy/paste entry error beginning day 4 of exp 2
 #	# in column Collection Day, D6 begins a line early (C14, whereas all others outside of D4-7 starts on O1)
 #
@@ -105,8 +109,7 @@ true_data <- read_xlsx('data/raw/PPI_Exp_Sample_List_2018.xlsx', sheet = 'Sheet1
 ## O_M1_D9, O_M2_D4, O_M3_D10, 
 ## last day depends on exp - Exp 1 (C_1-6, O_7-12, CO_13-18)_D14, Exp 2 (O_1-5, CO_6-10, C_11-14)_D16
 experiment_number <- true_data %>%
-	mutate(experiment = OmpDailyDose/20) %>%
-	select(treatment, mouse = MouseID, experiment) %>%
+	select(treatment, mouse, experiment) %>%
 	unique
 #
 ## what samples are duplicated
@@ -144,7 +147,7 @@ mislabeled_samples <- mutate(sample_id_df, mice_id = paste(treatment, mouse, sep
 
 sample_id_df <- sample_id_df %>%
 	filter(!Group %in% mislabeled_samples) %>%
-	select(-new_shared_names) %>%
+	select(-new_shared_names) %>% 
 	left_join(experiment_number, by = c('treatment', 'mouse'))
 
 ### tidy cdiff infection data
@@ -164,6 +167,37 @@ exp_2_cdiff <- exp_2_data %>%
 
 output_df <- full_join(sample_id_df,
 	exp_2_cdiff, by = c('treatment', 'mouse', 'day', 'experiment'))
+
+check_me_df <- output_df %>% 
+	filter(!is.na(sample_id)) %>% 
+	select(sample_id_me = sample_id, Group) %>% 
+	mutate(day = str_extract(Group, '(?<=D)\\d{1,2}') %>% as.numeric,
+		mouse = str_extract(Group, '(?<=M)\\d{1,2}') %>% as.numeric,
+		treatment = str_extract(Group, '[CO]+(?=POS)'),
+		unknown = ifelse(grepl('UNK', Group), T, F))
+
+check_true_df <- true_data %>% 
+	filter(!is.na(sample_id)) %>% 
+	mutate(sample_id_true = paste(treatment, mouse, day, sep = '_')) %>% 
+	select(plate_label = `Plate map label`, sample_id_true) %>% 
+	mutate(day = str_extract(plate_label, '(?<=D)\\d{1,2}') %>% as.numeric,
+		mouse = str_extract(plate_label, '(?<=M)\\d{1,2}') %>% as.numeric,
+		treatment = str_extract(plate_label, '[CO]+(?=pos)'),
+		unknown = ifelse(grepl('Unk|unk', plate_label), T, F))
+test_df <- full_join(check_me_df, check_true_df, by = c('day', 'mouse', 'treatment', 'unknown')) %>% 
+	filter(!is.na(Group)) %>% 
+	mutate(sample_id_check = sample_id_true == sample_id_me) 
+test_df %>% 
+	filter(sample_id_check == F) %>% 
+	select(Group, sample_id_me, sample_id_true, plate_label)
+test_df %>% 
+	filter(is.na(day) | is.na(mouse) | is.na(treatment) | is.na(unknown)) %>% 
+	select(sample_id, Group, plate_label)
+true_data %>% 
+	pull(sample_id) %>% 
+	table %>% 
+	data.frame %>% 
+	filter(Freq > 1)
 
 write.table(exp_2_wt, 'data/process/exp_2_weight.txt', 
 	row.names = F, quote = F, sep = '\t')
