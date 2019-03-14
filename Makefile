@@ -97,6 +97,11 @@ $(BASIC_STEM).pick.pick.pick.opti_mcc.unique_list.shared $(BASIC_STEM).pick.pick
 	rm $(BASIC_STEM).pick.pick.pick.fasta
 	rm $(BASIC_STEM).pick.pds.wang.pick.pick.taxonomy;
 
+# Alpha and beta diversity analysis
+data/mothur/ppi.opti_mcc.thetayc.0.03.lt.ave.nmds.axes data/mothur/ppi.opti_mcc.0.03.subsample.shared :\
+		data/mothur/ppi.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.opti_mcc.shared\
+		code/ppi_alpha_beta.batch 
+	mothur code/ppi_alpha_beta.batch 
 
 # now we want to get the sequencing error as seen in the mock community samples
 
