@@ -23,9 +23,13 @@ shared_sample_names <- read.table('data/mothur/ppi.opti_mcc.0.03.subsample.share
 		sep = '\t', header = T, stringsAsFactors = F) %>% 
 	select(Group) # select column with sample names of shared file which we will need to match our metadata to
 
-# load in plate map label from metadata file
+# load in plate map label from metadata file. Rename Plate map label column and Collection D column.
+# Get rid of the D before day number in the Collection D column.
+#Convert Plate map labels to way they are labeled in shared file.
 metadata <- read_xlsx('data/raw/PPI_metadata.xlsx') %>% 
   separate(Plate_number, c("plate_", "Plate_number")) %>% 
+  rename("day" = "Collection D") %>% 
+  mutate(day = as.numeric(gsub('D', '', day))) %>% 
   rename("Plate_label" = "Plate map label") %>% 
   # convert names of seq to match the format of the shared samples
   mutate(shared_names = gsub('^_{1,3}','', Plate_label),
@@ -40,8 +44,21 @@ metadata <- metadata %>% mutate(shared_names = replace(shared_names, shared_name
   mutate(shared_names = replace(shared_names, shared_names == "Opos+M5+D9+", "Opos+M5+D9"))
 
 # Now check to see if all 131 shared_sample_names join to fixed_shared_names
-final_metadata <- full_join(metadata, shared_sample_names, by = c('shared_names' = 'Group'))
+final_metadata <- inner_join(metadata, shared_sample_names, by = c('shared_names' = 'Group'))
 
-write.table(final_metadata, 'data/process/ppi_metadata.txt', 
+#Tidy C. difficile CFU data
+ppi_cdiff_cfu <- metadata %>%
+  select(Group, "Mouse ID", contains('difficile')) %>%
+  gather(day, cfu, -Group, -"Mouse ID") %>%
+  mutate(day = as.numeric(str_match(day, '\\d{1,2}'))) %>% 
+  unique() %>% 
+  mutate(Group = replace(Group, Group == "NA", NA)) %>% drop_na() %>%  #Get rid of rows that were placeholders for mock & control sequencing
+  select("Mouse ID", day, cfu)
+  
+#Join CFU data to metadata file
+output_df <- full_join(metadata,
+                       ppi_cdiff_cfu, by = c('Mouse ID', 'day'))
+
+write.table(output_df, 'data/process/ppi_metadata.txt', 
   row.names = F, quote = F, sep = '\t')
 
