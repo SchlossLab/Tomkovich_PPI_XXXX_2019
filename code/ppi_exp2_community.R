@@ -26,37 +26,16 @@ metadata <- read.table('data/process/ppi_metadata.txt', header = T, sep = '\t', 
 		Group == 'CO+' ~ 'Clindamycin + PPI'),
 		day = day - 7) # C difficile challenge on day 7
 
-double_samples <- metadata %>% 
-	select(Group, sample_id) %>% 
-	unique %>% 
-	group_by(sample_id) %>% 
-	tally()  %>% 
-	filter(n > 1) %>% 
-	pull(sample_id)
-
-edit_groups <- metadata %>% 
-	filter(sample_id %in% double_samples) %>% 
-	group_by(sample_id) %>% 
-	sample_n(1) %>% 
-	pull(Group)
-
-metadata <- metadata %>% 
-	mutate(mouse = ifelse(Group %in% edit_groups, 20, mouse),
-		sample_id = ifelse(Group %in% edit_groups, paste0(sample_id, '_'), sample_id),
-		mouse_id = ifelse(Group %in% edit_groups, paste0(mouse_id, '_'), mouse_id),
-		shared_samples = ifelse(Group %in% edit_groups, paste0(shared_samples, '_'), shared_samples))
-
-# create position to group stacked bar plot by cage
 mouse_label_df <- metadata %>% 
-  select(Mouse.ID, mouse, treatment, experiment) %>% 
+  select(Mouse.ID, Group) %>% 
   unique %>% 
-  group_by(treatment) %>% 
-  arrange(treatment, experiment, mouse) %>% 
-  mutate(mouse_position = 1:length(mouse)) %>% 
+  group_by(Group) %>% 
+  arrange(Mouse.ID) %>% 
+  mutate(mouse_position = 1:length(Mouse.ID)) %>% 
   ungroup %>% 
-  select(mouse_id, mouse_position)
+  select(Mouse.ID, mouse_position)
 
-meta_df <- left_join(metadata, mouse_label_df, by = 'mouse_id')
+meta_df <- left_join(metadata, mouse_label_df, by = 'Mouse.ID') %>% rename(treatment = Group)
 
 ## need to get taxonomy file
 #taxonomy_function <- 'code/sum_otu_by_taxa.R'
@@ -67,11 +46,11 @@ shared_df <- select(shared_df, -label, -numOtus, )
 
 sample_summed_counts <- apply(shared_df, 1, sum)
 rel_abund <- data.frame(100 * shared_df/sample_summed_counts) %>% 
-  mutate(Group = rownames(shared_df))
+  mutate(shared_names = rownames(shared_df))
 
 pre_post_end_df <- meta_df %>% 
-  right_join(select(rel_abund, Group), by = 'Group') %>% 
-  group_by(mouse_id) %>% 
+  right_join(select(rel_abund, shared_names), by = "shared_names") %>% 
+  group_by(Mouse.ID) %>% 
   mutate(endpoint = max(day), initial = min(day),
     sample_timepoint = case_when(day == initial ~ 'initial',
       day == 0 ~ 'day_0',
@@ -87,7 +66,7 @@ colonization_df <- meta_df %>%
   # but there are some cases day 1 might be deceptive so extending to day 2 
   # to see those that had delayed colonization
   filter(day > 0) %>% 
-  group_by(mouse_id) %>% 
+  group_by(Mouse.ID) %>% 
   mutate(cfu = ifelse(is.na(cfu), 0, cfu)) %>% 
   summarize(colonization = max(cfu))
 
@@ -105,7 +84,7 @@ top_otus <- function(input_dataframe, top_n){
     output_dataframe <- output_dataframe %>%
       full_join(top_otus, by = 'OTU') %>%  
       mutate(OTU = ifelse(is.na(top_otus), 'Other', OTU)) %>% 
-      group_by(Group, OTU) %>% 
+      group_by(shared_names, OTU) %>% 
       summarise(abundance = sum(abundance)) %>% 
       mutate(dataset = paste0('top_', top_n, '_by_OTU')) %>% 
       ungroup 
@@ -115,21 +94,21 @@ top_otus <- function(input_dataframe, top_n){
 pre_post_end_otu_df <- pre_post_end_df %>% 
   split(.$treatment) %>% 
   map_dfr(function(df) left_join(df, 
-        top_otus(input_dataframe = filter(rel_abund, Group %in% df$Group), top_n = 11),
-      by = 'Group')) 
+        top_otus(input_dataframe = filter(rel_abund, shared_names %in% df$shared_names), top_n = 11),
+      by = "shared_names"))
 
 all_days_otu_df <- meta_df %>% 
   split(.$treatment) %>% 
   map_dfr(function(df) left_join(df, 
-        top_otus(input_dataframe = filter(rel_abund, Group %in% df$Group), top_n = 11),
-      by = 'Group')) 
+        top_otus(input_dataframe = filter(rel_abund, shared_names %in% df$shared_names), top_n = 11),
+      by = "shared_names")) 
 	
 barwidth <- 1
 df <- pre_post_end_otu_df
 pre_postabx_end_plot <- df %>% 
   mutate(sample_timepoint = factor(sample_timepoint, c('initial', 'day_0', 'endpoint')),
     taxa = factor(OTU, c('Other', unique(df$OTU)[unique(df$OTU)!='Other']))) %>% 
-  ggplot(aes(x = mouse_position, y = abundance, fill = taxa)) + 
+  ggplot(aes(x = Mouse.ID, y = abundance, fill = taxa)) + 
     geom_bar(stat="identity", position='stack', width = 1, color = "black", size = 0.1) + 
     facet_grid(treatment ~ sample_timepoint) + 
     theme_bw() + labs(x = NULL) + 
@@ -140,9 +119,9 @@ pre_postabx_end_plot <- df %>%
 
 cdiff_plot <- pre_post_end_df %>% 
   filter(sample_timepoint == 'endpoint') %>% 
-  left_join(colonization_df, by = 'mouse_id') %>% 
+  left_join(colonization_df, by = 'Mouse.ID') %>% 
   rename(CFU = colonization) %>% 
-  ggplot(aes(x = mouse_position, y = CFU)) + 
+  ggplot(aes(x = Mouse.ID, y = CFU)) + 
     geom_bar(stat="identity", position='stack', width = barwidth) + 
     facet_grid(treatment ~ .) + 
     scale_y_log10() + 
@@ -160,7 +139,7 @@ ggsave(paste0('exploratory/notebook/pre_post_end_plots_top_otus.jpg'),
 
 daily_plot <- all_days_otu_df %>% 
   mutate(taxa = factor(OTU, c('Other', unique(df$OTU)[unique(df$OTU)!='Other']))) %>% 
-  ggplot(aes(x = mouse_position, y = abundance, fill = taxa)) + 
+  ggplot(aes(x = Mouse.ID, y = abundance, fill = taxa)) + 
     geom_bar(stat="identity", position='stack', width = 1, color = "black", size = 0.1) + 
     facet_grid(treatment ~ day) + 
     theme_bw() + labs(x = NULL) + 
