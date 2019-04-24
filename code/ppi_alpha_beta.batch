@@ -13,5 +13,3 @@ dist.shared(shared=ppi.opti_mcc.shared, calc=thetayc-jclass, subsample=1000)
 # Generate 2 dimensional NMDS
 nmds(phylip=ppi.opti_mcc.thetayc.0.03.lt.ave.dist)
 
-# Generate 3 dimensional NMDS
-nmds(phylip=ppi.opti_mcc.thetayc.0.03.lt.ave.dist, mindim=3, maxdim=3)
