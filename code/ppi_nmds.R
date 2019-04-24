@@ -44,7 +44,7 @@ nmds %>%
 	plot_ly(x = ~axis1, y = ~axis2, z = ~axis3, type = 'scatter3d', mode = 'markers',
 		color = ~Group, size = ~size, 
 		marker = list(symbol = 'circle', sizemode = 'diameter'), sizes = c(10,20)) %>% # sizes determines the range of sizes c(smallest, largest)
-		layout(title = 'Community by Treatment')
+		layout(title = 'Community by treatment')
 
 # plot for before abx
 nmds %>% 
@@ -61,8 +61,24 @@ nmds %>%
 	plot_ly(x = ~axis1, y = ~axis2, z = ~axis3, type = 'scatter3d', mode = 'markers',
 		color = ~Group, size = ~size, 
 		marker = list(symbol = 'circle', sizemode = 'diameter'), sizes = c(10,20)) %>% # sizes determines the range of sizes c(smallest, largest)
-		layout(title = 'Community by Treatment before antibiotics') # dont forget to change title based on filtering of experiment
+		layout(title = 'Community by treatment before antibiotics') # dont forget to change title based on filtering of experiment
 
+#plot before abx with D0 removed
+nmds %>% 
+  # convert Group letter labels to more descriptive labels
+  mutate(Group = case_when(Group == 'O+' ~ 'PPI',
+                           Group == 'C+' ~ 'Clindamycin',
+                           Group == 'CO+' ~ 'Clindamycin + PPI'),
+         # modify day number for plotting by size
+         size = case_when(day <= 6 ~ 1,
+                          day == 7 ~ 2,
+                          day > 7 ~ day - 4)) %>% 
+  # look at days after to compare abx Group + cdiff challenge
+  filter(day < 7) %>% filter(day > 0) %>% 
+  plot_ly(x = ~axis1, y = ~axis2, z = ~axis3, type = 'scatter3d', mode = 'markers',
+          color = ~Group, size = ~size, 
+          marker = list(symbol = 'circle', sizemode = 'diameter'), sizes = c(10,20)) %>% # sizes determines the range of sizes c(smallest, largest)
+  layout(title = 'Community by treatment before antibiotics without D0') # dont forget to change title based on filtering of experiment
 
 # plot day after abx
 nmds %>% 
@@ -94,7 +110,7 @@ nmds %>%
   plot_ly(x = ~axis1, y = ~axis2, z = ~axis3, type = 'scatter3d', mode = 'markers',
           color = ~Group, size = ~size, 
           marker = list(symbol = 'circle', sizemode = 'diameter'), sizes = c(10,20)) %>% 
-  layout(title = 'Community by Treatment after antibiotics and C. difficile infection')
+  layout(title = 'Community by treatment after antibiotics and C. difficile infection')
 
 #####
 # if we wanted to create a line for time instead of sizing by time
