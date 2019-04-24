@@ -1,6 +1,6 @@
 #####################
 # 
-# analysis of experiment - Treat mice with abx/PPI and challenge with C difficile
+# analysis of experiment - Treat mice with abx and/or PPI and challenge with C difficile
 # 
 # input:
 #	data/mothur/ppi.opti_mcc.0.03.subsample.shared
@@ -22,7 +22,7 @@ shared <- read.table('data/mothur/ppi.opti_mcc.0.03.subsample.shared', sep = '\t
 
 metadata <- read.table('data/process/ppi_metadata.txt', header = T, sep = '\t', stringsAsFactors = F)
 
-# read in 3d nmds data
+# read in 2d nmds data
 nmds <- read.table('data/mothur/ppi.opti_mcc.thetayc.0.03.lt.ave.nmds.axes', 
 		sep = '\t', header = T, stringsAsFactors = F) %>% rename(shared_names = group) %>% 
 	right_join(metadata, by = "shared_names") # join with cleaned up metadata for day, mouse, treatment
@@ -41,7 +41,7 @@ nmds %>%
 	# look at days before 7 to only include pre-clinda treatment. Mice were treated with clinda on D6, so stool
   # sample from D6 is still pre-clinda.
 	filter(day < 7) %>% 
-	plot_ly(x = ~axis1, y = ~axis2, z = ~axis3, type = 'scatter3d', mode = 'markers',
+	plot_ly(x = ~axis1, y = ~axis2, type = 'scatter', mode = 'markers',
 		color = ~Group, size = ~size, 
 		marker = list(symbol = 'circle', sizemode = 'diameter'), sizes = c(10,20)) %>% # sizes determines the range of sizes c(smallest, largest)
 		layout(title = 'Community by treatment')
@@ -58,7 +58,7 @@ nmds %>%
 		day > 7 ~ day - 4)) %>% 
 	# look at days after to compare abx Group + cdiff challenge
 	filter(day < 7) %>% 
-	plot_ly(x = ~axis1, y = ~axis2, z = ~axis3, type = 'scatter3d', mode = 'markers',
+	plot_ly(x = ~axis1, y = ~axis2, type = 'scatter', mode = 'markers',
 		color = ~Group, size = ~size, 
 		marker = list(symbol = 'circle', sizemode = 'diameter'), sizes = c(10,20)) %>% # sizes determines the range of sizes c(smallest, largest)
 		layout(title = 'Community by treatment before antibiotics') # dont forget to change title based on filtering of experiment
@@ -75,7 +75,7 @@ nmds %>%
                           day > 7 ~ day - 4)) %>% 
   # look at days after to compare abx Group + cdiff challenge
   filter(day < 7) %>% filter(day > 0) %>% 
-  plot_ly(x = ~axis1, y = ~axis2, z = ~axis3, type = 'scatter3d', mode = 'markers',
+  plot_ly(x = ~axis1, y = ~axis2, type = 'scatter', mode = 'markers',
           color = ~Group, size = ~size, 
           marker = list(symbol = 'circle', sizemode = 'diameter'), sizes = c(10,20)) %>% # sizes determines the range of sizes c(smallest, largest)
   layout(title = 'Community by treatment before antibiotics without D0') # dont forget to change title based on filtering of experiment
@@ -91,7 +91,7 @@ nmds %>%
                           day == 7 ~ 2,
                           day > 7 ~ day - 4)) %>% 
 	filter(day == 7) %>% 
-	plot_ly(x = ~axis1, y = ~axis2, z = ~axis3, type = 'scatter3d', mode = 'markers',
+	plot_ly(x = ~axis1, y = ~axis2, type = 'scatter', mode = 'markers',
 		color = ~Group, size = ~size, 
 		marker = list(symbol = 'circle', sizemode = 'diameter'), sizes = c(10,20)) %>% 
 		layout(title = 'Community by Treatment after antibiotics')
@@ -107,7 +107,7 @@ nmds %>%
                           day == 7 ~ 2,
                           day > 7 ~ day - 4)) %>% 
   filter(day > 7) %>% 
-  plot_ly(x = ~axis1, y = ~axis2, z = ~axis3, type = 'scatter3d', mode = 'markers',
+  plot_ly(x = ~axis1, y = ~axis2, type = 'scatter', mode = 'markers',
           color = ~Group, size = ~size, 
           marker = list(symbol = 'circle', sizemode = 'diameter'), sizes = c(10,20)) %>% 
   layout(title = 'Community by treatment after antibiotics and C. difficile infection')
