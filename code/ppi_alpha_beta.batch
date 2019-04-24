@@ -1,4 +1,4 @@
-# Generate subsample shared files and 2 & 3D nmds files
+# Generate subsample shared files, 2D nmds files, and PCoA files
 set.dir(input=data/mothur, output=data/mothur)
 
 # Shorten filenames
