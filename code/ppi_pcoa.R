@@ -7,14 +7,12 @@
 #	data/process/ppi_metadata.txt
 #
 # output:
-#	plotly html plot
-#		running code will open plot in browser
-#		plot can be modified and saved from browser
+#	pcoa plots
+#		
 #
 #####################
 
 library(tidyverse)
-library(plotly)
 
 metadata <- read.table('data/process/ppi_metadata.txt', header = T, sep = '\t', stringsAsFactors = F)
 
@@ -23,109 +21,73 @@ pcoa <- read_tsv('data/mothur/ppi.opti_mcc.braycurtis.0.03.lt.ave.pcoa.axes') %>
   select(group, axis1, axis2) %>% rename(shared_names = group) %>% 
 	right_join(metadata, by = "shared_names") # join with cleaned up metadata for day, mouse, treatment
   # Select O+, C+, and CO+ groups. Convert Group letter labels to more descriptive labels
-pcoa <- pcoa %>% filter(Group == "O+", "C+", "CO+")
+pcoa <- pcoa %>% filter(Group != "NA") %>% 
   mutate(Group = case_when(Group == 'O+' ~ 'PPI', 
                            Group == 'C+' ~ 'Clindamycin',
                            Group == 'CO+' ~ 'Clindamycin + PPI'))
 #plot all samples
-pcoa %>% 
-         # modify day number for plotting by size
-         size = case_when(day <= 6 ~ 4,
-                          day == 7 ~ 2,
-                          day > 7 ~ day - 1)) %>% 
+pcoa %>%  
   ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
-  geom_point()
+  geom_point() +
+  theme_classic()+
+  labs(title="All groups, all timepoints") +
+  theme(plot.title = element_text(hjust = 0.5))
+
 
 #plot just PPI samples
-# plot for before abx
-nmds %>% 
-	# convert Group letter labels to more descriptive labels
-	mutate(Group = case_when(Group == 'O+' ~ 'PPI', 
-		Group == 'C+' ~ 'Clindamycin',
-		Group == 'CO+' ~ 'Clindamycin + PPI'),
-	# modify day number for plotting by size
-		size = case_when(day <= 6 ~ 1,
-		day == 7 ~ 2,
-		day > 7 ~ day - 4)) %>% 
-	# look at days before 7 to only include pre-clinda treatment. Mice were treated with clinda on D6, so stool
-  # sample from D6 is still pre-clinda.
-	filter(day < 7) %>% 
-	plot_ly(x = ~axis1, y = ~axis2, type = 'scatter', mode = 'markers',
-		color = ~Group, size = ~size, 
-		marker = list(symbol = 'circle', sizemode = 'diameter'), sizes = c(10,20)) %>% # sizes determines the range of sizes c(smallest, largest)
-		layout(title = 'Community by treatment')
+pcoa %>% filter(Group == "PPI") %>%  
+  ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
+  geom_point()+
+  theme_classic() +
+  labs(title="PPI-treated mice") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+#plot just Clindamycin samples
+pcoa %>% filter(Group == "Clindamycin") %>%  
+  ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
+  geom_point() +
+  theme_classic()+
+  labs(title="Clindamycin-treated mice") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+#plot just Clindamycin + PPI samples
+pcoa %>% filter(Group == "Clindamycin + PPI") %>%  
+  ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
+  geom_point() +
+  theme_classic() +
+  labs(title="Clindamycin/PPI treated mice") +
+  theme(plot.title = element_text(hjust = 0.5))
 
 # plot for before abx
-nmds %>% 
-	# convert Group letter labels to more descriptive labels
-	mutate(Group = case_when(Group == 'O+' ~ 'PPI',
-		Group == 'C+' ~ 'Clindamycin',
-		Group == 'CO+' ~ 'Clindamycin + PPI'),
-		# modify day number for plotting by size
-		size = case_when(day <= 6 ~ 1,
-		day == 7 ~ 2,
-		day > 7 ~ day - 4)) %>% 
-	# look at days after to compare abx Group + cdiff challenge
-	filter(day < 7) %>% 
-	plot_ly(x = ~axis1, y = ~axis2, type = 'scatter', mode = 'markers',
-		color = ~Group, size = ~size, 
-		marker = list(symbol = 'circle', sizemode = 'diameter'), sizes = c(10,20)) %>% # sizes determines the range of sizes c(smallest, largest)
-		layout(title = 'Community by treatment before antibiotics') # dont forget to change title based on filtering of experiment
+pcoa %>% filter(day < 7) %>% 
+  ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
+  geom_point() +
+  theme_classic() +
+  labs(title="Before antibiotic treatment") +
+  theme(plot.title = element_text(hjust = 0.5))
+  
 
 #plot before abx with D0 removed
-nmds %>% 
-  # convert Group letter labels to more descriptive labels
-  mutate(Group = case_when(Group == 'O+' ~ 'PPI',
-                           Group == 'C+' ~ 'Clindamycin',
-                           Group == 'CO+' ~ 'Clindamycin + PPI'),
-         # modify day number for plotting by size
-         size = case_when(day <= 6 ~ 1,
-                          day == 7 ~ 2,
-                          day > 7 ~ day - 4)) %>% 
-  # look at days after to compare abx Group + cdiff challenge
-  filter(day < 7) %>% filter(day > 0) %>% 
-  plot_ly(x = ~axis1, y = ~axis2, type = 'scatter', mode = 'markers',
-          color = ~Group, size = ~size, 
-          marker = list(symbol = 'circle', sizemode = 'diameter'), sizes = c(10,20)) %>% # sizes determines the range of sizes c(smallest, largest)
-  layout(title = 'Community by treatment before antibiotics without D0') # dont forget to change title based on filtering of experiment
+pcoa %>% filter(day < 7) %>% filter(day > 0) %>% 
+  ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
+  geom_point() +
+  theme_classic()+
+  labs(title="Before antibiotic treatment without initial baseline day") +
+  theme(plot.title = element_text(hjust = 0.5))
 
 # plot day after abx
-nmds %>% 
-  # convert Group letter labels to more descriptive labels
-  mutate(Group = case_when(Group == 'O+' ~ 'PPI',
-                           Group == 'C+' ~ 'Clindamycin',
-                           Group == 'CO+' ~ 'Clindamycin + PPI'),
-         # modify day number for plotting by size
-         size = case_when(day <= 6 ~ 1,
-                          day == 7 ~ 2,
-                          day > 7 ~ day - 4)) %>% 
-	filter(day == 7) %>% 
-	plot_ly(x = ~axis1, y = ~axis2, type = 'scatter', mode = 'markers',
-		color = ~Group, size = ~size, 
-		marker = list(symbol = 'circle', sizemode = 'diameter'), sizes = c(10,20)) %>% 
-		layout(title = 'Community by Treatment after antibiotics')
+pcoa %>%	filter(day == 7) %>% 
+  ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
+  geom_point() +
+  theme_classic()+
+  labs(title="Day after antibiotic treatment") +
+  theme(plot.title = element_text(hjust = 0.5))
 
 # plot after abx & C. diff
-nmds %>% 
-  # convert Group letter labels to more descriptive labels
-  mutate(Group = case_when(Group == 'O+' ~ 'PPI',
-                           Group == 'C+' ~ 'Clindamycin',
-                           Group == 'CO+' ~ 'Clindamycin + PPI'),
-         # modify day number for plotting by size
-         size = case_when(day <= 6 ~ 1,
-                          day == 7 ~ 2,
-                          day > 7 ~ day - 4)) %>% 
-  filter(day > 7) %>% 
-  plot_ly(x = ~axis1, y = ~axis2, type = 'scatter', mode = 'markers',
-          color = ~Group, size = ~size, 
-          marker = list(symbol = 'circle', sizemode = 'diameter'), sizes = c(10,20)) %>% 
-  layout(title = 'Community by treatment after antibiotics and C. difficile infection')
-
-#####
-# if we wanted to create a line for time instead of sizing by time
-#####
-#mouse_list <- split(nmds, nmds$mouse_id)
-#nmds %>% 
-#	plot_ly(x = ~axis1, y = ~axis2, z = ~axis3) %>% 
-#		add_trace(mouse_list[[1]], x = mouse_list[[1]]$axis1, y = mouse_list[[1]]$axis2, z = mouse_list[[1]]$axis3)
+pcoa %>% filter(day > 7) %>% 
+  ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
+  geom_point() +
+  theme_classic() +
+  labs(title="After antibiotic treatment & C. difficile challenge") +
+  theme(plot.title = element_text(hjust = 0.5))
 
