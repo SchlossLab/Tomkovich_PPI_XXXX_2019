@@ -7,6 +7,7 @@ rename.file(taxonomy=ppi.trim.contigs.good.unique.good.filter.unique.precluster.
 # Subsample data
 sub.sample(shared=ppi.opti_mcc.shared, size=1000)
 
+rarefaction.single(shared=ppi.opti_mcc.shared, calc=sobs, freq=100)
 summary.single(shared=ppi.opti_mcc.shared, calc=nseqs-coverage-invsimpson-shannon-sobs, subsample=1000)
 dist.shared(shared=ppi.opti_mcc.shared, calc=thetayc-jclass-braycurtis, subsample=1000)
 
