@@ -9,7 +9,7 @@ sub.sample(shared=ppi.opti_mcc.shared, size=3000)
 
 rarefaction.single(shared=ppi.opti_mcc.shared, calc=sobs, freq=100)
 summary.single(shared=ppi.opti_mcc.shared, calc=nseqs-coverage-invsimpson-shannon-sobs, subsample=1000)
-dist.shared(shared=ppi.opti_mcc.shared, calc=thetayc-jclass-braycurtis, subsample=1000)
+dist.shared(shared=ppi.opti_mcc.shared, calc=thetayc-jclass-braycurtis, subsample=3000)
 
 # Generate 2 dimensional NMDS
 nmds(phylip=ppi.opti_mcc.thetayc.0.03.lt.ave.dist)
