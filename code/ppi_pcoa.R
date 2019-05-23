@@ -42,6 +42,14 @@ pcoa %>% filter(Group == "PPI") %>%
   labs(title="PPI-treated mice") +
   theme(plot.title = element_text(hjust = 0.5))
 
+#plot just PPI samples over the first 7 days
+pcoa %>% filter(Group == "PPI") %>%  filter(day < 8) %>% 
+  ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
+  geom_point()+
+  theme_classic() +
+  labs(title="PPI-treated mice over first 7 days") +
+  theme(plot.title = element_text(hjust = 0.5))
+
 #plot just Clindamycin samples
 pcoa %>% filter(Group == "Clindamycin") %>%  
   ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
@@ -81,6 +89,14 @@ pcoa %>%	filter(day == 7) %>%
   geom_point() +
   theme_classic()+
   labs(title="Day after antibiotic treatment") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# plot 1st 7 days: Includes abx treatment day
+pcoa %>% filter(day < 8) %>%	
+  ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
+  geom_point() +
+  theme_classic()+
+  labs(title="Days before C. difficile challenge including antibiotic treatment") +
   theme(plot.title = element_text(hjust = 0.5))
 
 # plot after abx & C. diff
