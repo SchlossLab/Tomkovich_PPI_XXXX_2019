@@ -18,12 +18,9 @@
 library(tidyverse)
 library(broom)
 
-# Import metadata into data frame and clean
+# Import metadata into data frame
 metadata <- read.table('data/process/ppi_metadata.txt', header = T, sep = '\t', stringsAsFactors = F) %>% 
-  filter(Group != "NA") %>% #Exclude the mock community
-  mutate(Group = case_when(Group == 'O+' ~ 'PPI', #make group names readable by humans
-                           Group == 'C+' ~ 'Clindamycin',
-                           Group == 'CO+' ~ 'Clindamycin + PPI'))
+  filter(Group != "NA") #Exclude the mock community
 
 # Import taxonomy into data frame and clean up taxonomy names
 taxonomy <- read_tsv(file="data/mothur/ppi.taxonomy") %>%
@@ -108,6 +105,14 @@ agg_genus_data <- agg_taxa_data %>%
   inner_join(., metadata, by = "shared_names") %>% 
   ungroup() 
 
+# Summarize relative abundance data for family level
+agg_family_data <- agg_taxa_data %>% 
+  group_by(shared_names, family) %>% 
+  summarize(agg_rel_abund=sum(rel_abund)) %>% 
+  # Merge relative abundance data to phyla data
+  inner_join(., metadata, by = "shared_names") %>% 
+  ungroup() 
+
 # Use top_n function to determine top 10 genera in our samples
 top_genus <- agg_genus_data %>% 
   group_by(genus) %>% 
@@ -184,6 +189,34 @@ agg_phylum_data %>%
   scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
   theme_classic()
 
+#Kruskal_wallis test for family differences across treatment groups with Benjamini-Hochburg correction 
+family_tests <- agg_family_data %>% 
+  group_by(family) %>% 
+  do(tidy(kruskal.test(agg_rel_abund~factor(Group), data=.))) %>% ungroup() %>% 
+  mutate(p.value.adj=p.adjust(p.value, method="BH")) %>% 
+  arrange(p.value.adj)
+
+#List the significant family based on treatment groups after Benjamini-Hochburg correction
+sig_family <- family_tests %>% 
+  filter(p.value.adj <= 0.05) %>% 
+  pull(family)
+
+#Graph the significant family based on treatment groups after Benjamini-Hochburg correction
+agg_family_data %>% 
+  filter(family %in% sig_family) %>% 
+  mutate(family=factor(family, levels=sig_family)) %>% 
+  mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
+  ggplot(aes(x= reorder(family, agg_rel_abund), y=agg_rel_abund, color=Group, alpha = day))+
+  geom_hline(yintercept=1/3000, color="gray")+
+  geom_boxplot(outlier.shape = NA)+
+  geom_jitter(shape=19, size=1, alpha=0.7, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2)) +
+  labs(title="Family significantly associated with treatment group", 
+       x=NULL,
+       y="Relative abundance (%)")+
+  scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
+  coord_flip()+
+  theme_classic()
+
 #Kruskal_wallis test for genus differences across treatment groups with Benjamini-Hochburg correction 
 genus_tests <- agg_genus_data %>% 
   group_by(genus) %>% 
@@ -204,7 +237,7 @@ agg_genus_data %>%
   ggplot(aes(x= reorder(genus, agg_rel_abund), y=agg_rel_abund, color=Group))+
   geom_hline(yintercept=1/3000, color="gray")+
   geom_boxplot(outlier.shape = NA)+
-  geom_jitter(shape=19, size=1, alpha=0.7, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2)) +
+  geom_jitter(shape=19, size=1, alpha=0.6, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2)) +
   labs(title="Genera significantly associated with treatment group", 
        x=NULL,
        y="Relative abundance (%)")+
@@ -215,7 +248,7 @@ agg_genus_data %>%
 #Kruskal_wallis test with Benjamini-Hochburg correction for phylum differences across time in the PPI treatment group 
 ppi_phylum_tests <- agg_phylum_data %>% 
   group_by(phylum) %>% 
-  filter(Group == "PPI", day %in% c("0", "7", "16")) %>%
+  filter(Group == "PPI", day %in% c("-7", "0", "9")) %>%
   do(tidy(kruskal.test(agg_rel_abund~factor(day), data=.))) %>% ungroup() %>% 
   mutate(p.value.adj=p.adjust(p.value, method="BH")) %>% 
   arrange(p.value.adj)
@@ -228,7 +261,7 @@ ppi_sig_phyla <- ppi_phylum_tests %>%
 #Graph the significant phyla over time in the PPI treatment group after Benjamini-Hochburg correction
 agg_phylum_data %>% 
   filter(phylum %in% ppi_sig_phyla) %>% 
-  filter(Group == "PPI", day %in% c("0", "7", "16")) %>%
+  filter(Group == "PPI", day %in% c("-7", "0", "9")) %>%
   mutate(phylum=factor(phylum, levels=ppi_sig_phyla)) %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
   ggplot(aes(x= reorder(phylum, agg_rel_abund), y=agg_rel_abund, color=Group))+
@@ -244,7 +277,7 @@ agg_phylum_data %>%
 #Kruskal_wallis test for genus differences across time in the PPI group with Benjamini-Hochburg correction 
 ppi_genus_tests <- agg_genus_data %>% 
   group_by(genus) %>% 
-  filter(Group == "PPI", day %in% c("0", "7", "16")) %>%
+  filter(Group == "PPI", day %in% c("-7", "0", "9")) %>%
   do(tidy(kruskal.test(agg_rel_abund~factor(day), data=.))) %>% ungroup() %>% 
   mutate(p.value.adj=p.adjust(p.value, method="BH")) %>% 
   arrange(p.value.adj)
@@ -257,7 +290,7 @@ ppi_sig_genus <- ppi_genus_tests %>%
 #Graph genera across time in the PPI group
 agg_genus_data %>% 
   filter(genus %in% ppi_genus_tests) %>% 
-  filter(Group == "PPI", day %in% c("0", "7", "16")) %>%
+  filter(Group == "PPI", day %in% c("-7", "0", "9")) %>%
   mutate(genus=factor(genus, levels=ppi_genus_tests)) %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
   ggplot(aes(x= reorder(genus, agg_rel_abund), y=agg_rel_abund, color=day))+
@@ -274,9 +307,111 @@ agg_genus_data %>%
   filter(genus == "Ruminococcus") %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
   select(Group, day, agg_rel_abund, genus) %>% 
+##  filter(Group == "PPI") %>%
+  ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
+  geom_point()+
+  geom_line()+
+  geom_hline(yintercept=1/3000, color="gray")+
+  theme_classic()
+
+agg_genus_data %>% 
+  filter(genus == "Enterococcus") %>% 
+  mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
+  select(Group, day, agg_rel_abund, genus) %>% 
+##  filter(Group == "PPI") %>%
+  ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
+  geom_point()+
+  geom_line()+
+  geom_line(position=position_dodge(width=0.2))+ #Show lines from all groups
+  geom_hline(yintercept=1/3000, color="gray")+
+  theme_classic()
+
+agg_genus_data %>% 
+  filter(genus == "Streptococcus") %>% 
+  mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
+  select(Group, day, agg_rel_abund, genus) %>% 
   filter(Group == "PPI") %>%
   ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
   geom_point()+
   geom_line()+
   geom_hline(yintercept=1/3000, color="gray")+
   theme_classic()
+
+#Plots of families of bacteria that are associated with PPI use in humans
+agg_family_data %>% 
+  filter(family == "Enterococcaceae") %>% 
+  mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
+  select(Group, day, agg_rel_abund, family) %>% 
+  filter(Group == "PPI") %>%
+  ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
+  geom_point()+
+  geom_line()+
+  geom_hline(yintercept=1/3000, color="gray")+
+  theme_classic()
+
+agg_family_data %>% 
+  filter(family == "Lactobacillaceae") %>% 
+  mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
+  select(Group, day, agg_rel_abund, family) %>% 
+  filter(Group == "PPI") %>%
+  ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
+  geom_point()+
+  geom_line()+
+  geom_hline(yintercept=1/3000, color="gray")+
+  theme_classic()
+
+agg_family_data %>% 
+  filter(family == "Micrococcaceae") %>% 
+  mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
+  select(Group, day, agg_rel_abund, family) %>% 
+  filter(Group == "PPI") %>%
+  ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
+  geom_point()+
+  geom_line()+
+  geom_hline(yintercept=1/3000, color="gray")+
+  theme_classic()
+
+agg_family_data %>% 
+  filter(family == "Staphylococcaeae") %>% 
+  mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
+  select(Group, day, agg_rel_abund, family) %>% 
+  filter(Group == "PPI") %>%
+  ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
+  geom_point()+
+  geom_line()+
+  geom_hline(yintercept=1/3000, color="gray")+
+  theme_classic()
+
+agg_family_data %>% 
+  filter(family == "Streptococcaceae") %>% 
+  mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
+  select(Group, day, agg_rel_abund, family) %>% 
+  filter(Group == "PPI") %>%
+  ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
+  geom_point()+
+  geom_line()+
+  geom_hline(yintercept=1/3000, color="gray")+
+  theme_classic()
+
+agg_family_data %>% 
+  filter(family == "Ruminoccoccaeae") %>% 
+  mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
+  select(Group, day, agg_rel_abund, family) %>% 
+  filter(Group == "PPI") %>%
+  ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
+  geom_point()+
+  geom_line()+
+  geom_hline(yintercept=1/3000, color="gray")+
+  theme_classic()
+
+agg_family_data %>% 
+  filter(family == "Lachnospiraceae") %>% 
+  mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
+  select(Group, day, agg_rel_abund, family) %>% 
+  filter(Group == "PPI") %>%
+  ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
+  geom_point()+
+  geom_line()+
+  geom_hline(yintercept=1/3000, color="gray")+
+  theme_classic()
+
