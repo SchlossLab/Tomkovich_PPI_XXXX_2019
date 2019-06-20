@@ -13,6 +13,7 @@
 #####################
 
 library(tidyverse)
+library(cowplot)
 
 metadata <- read.table('data/process/ppi_metadata.txt', header = T, sep = '\t', stringsAsFactors = F)
 
@@ -65,12 +66,14 @@ pcoa %>% filter(Group == "Clindamycin + PPI") %>%
   theme(plot.title = element_text(hjust = 0.5))
 
 # plot for before abx
-pcoa %>% filter(day < -1) %>% 
+before_abx <- pcoa %>% filter(day < -1) %>% 
   ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
   geom_point() +
   theme_classic() +
   labs(title="Before antibiotic treatment") +
-  theme(plot.title = element_text(hjust = 0.5))
+  theme(plot.title = element_text(hjust = 0.5))+
+  ggsave("results/figures/before_abx.png")
+  
   
 
 #plot before abx with D0 removed
@@ -79,15 +82,16 @@ pcoa %>% filter(day < -1) %>% filter(day > -7) %>%
   geom_point() +
   theme_classic()+
   labs(title="Before antibiotic treatment without initial baseline day") +
-  theme(plot.title = element_text(hjust = 0.5))
+  theme(plot.title = element_text(hjust = 0.5)))
 
 # plot day after abx
-pcoa %>%	filter(day == 0) %>% 
+before_plus_day_after_abx <- pcoa %>%	filter(day < 1) %>% 
   ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
   geom_point() +
   theme_classic()+
-  labs(title="Day after antibiotic treatment") +
-  theme(plot.title = element_text(hjust = 0.5))
+  labs(title="Before antibiotic treatment + 1 day after") +
+  theme(plot.title = element_text(hjust = 0.5))+
+  ggsave("results/figures/before_plus_day_after_abx.png")
 
 # plot 1st 7 days: Includes abx treatment day
 pcoa %>% filter(day < 1) %>%	
@@ -103,5 +107,6 @@ pcoa %>% filter(day > 1) %>%
   geom_point() +
   theme_classic() +
   labs(title="After antibiotic treatment & C. difficile challenge") +
-  theme(plot.title = element_text(hjust = 0.5))
+  theme(plot.title = element_text(hjust = 0.5))+
+  ggsave("results/figures/after_abx_C.diff.png")
 

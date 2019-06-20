@@ -17,6 +17,7 @@
 #Setup----
 library(tidyverse)
 library(broom)
+library(cowplot)
 
 # Import metadata into data frame
 metadata <- read.table('data/process/ppi_metadata.txt', header = T, sep = '\t', stringsAsFactors = F) %>% 
@@ -82,7 +83,7 @@ top_phyla <- agg_phylum_data %>%
   top_n(5, median) %>% 
   pull(phylum)
 
-# Plot of phylum data with log-scaled y-axis: 
+# Plot of top phylum data with log-scaled y-axis: 
 agg_phylum_data %>% 
   filter(phylum %in% top_phyla) %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
@@ -121,7 +122,7 @@ top_genus <- agg_genus_data %>%
   top_n(10, median) %>% 
   pull(genus)
 
-# Plot of genus data with log-scaled y-axis: 
+# Plot of top genus data with log-scaled y-axis: 
 agg_genus_data %>% 
   filter(genus %in% top_genus) %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
@@ -136,7 +137,7 @@ agg_genus_data %>%
   coord_flip()+
   theme_classic()
 
-# Plot of genus over time
+# Plot of top genus over time
 agg_genus_data %>% 
   filter(genus %in% top_genus) %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
@@ -243,7 +244,8 @@ agg_genus_data %>%
        y="Relative abundance (%)")+
   scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
   coord_flip()+
-  theme_classic()
+  theme_classic()+
+  ggsave("results/figures/genera_assoc_w_treatment.png")
    
 #Kruskal_wallis test with Benjamini-Hochburg correction for phylum differences across time in the PPI treatment group 
 ppi_phylum_tests <- agg_phylum_data %>% 
@@ -277,7 +279,7 @@ agg_phylum_data %>%
 #Kruskal_wallis test for genus differences across time in the PPI group with Benjamini-Hochburg correction 
 ppi_genus_tests <- agg_genus_data %>% 
   group_by(genus) %>% 
-  filter(Group == "PPI", day %in% c("-7", "0", "9")) %>%
+  filter(Group == "PPI", day %in% c("-7", "9")) %>%
   do(tidy(kruskal.test(agg_rel_abund~factor(day), data=.))) %>% ungroup() %>% 
   mutate(p.value.adj=p.adjust(p.value, method="BH")) %>% 
   arrange(p.value.adj)
@@ -290,7 +292,7 @@ ppi_sig_genus <- ppi_genus_tests %>%
 #Graph genera across time in the PPI group
 agg_genus_data %>% 
   filter(genus %in% ppi_genus_tests) %>% 
-  filter(Group == "PPI", day %in% c("-7", "0", "9")) %>%
+  filter(Group == "PPI", day %in% c("-7", "9")) %>%
   mutate(genus=factor(genus, levels=ppi_genus_tests)) %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
   ggplot(aes(x= reorder(genus, agg_rel_abund), y=agg_rel_abund, color=day))+

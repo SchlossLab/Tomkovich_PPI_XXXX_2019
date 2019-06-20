@@ -1,53 +1,50 @@
 #Load packages
 library(tidyverse)
-library(dtw)
 library(vegan)
+library(cowplot)
 
-#Define input files
-cfu <- 'data/08_20_18_Omep.#2/08_20_18_Omep._#2_exp.xlsx'
+# Import metadata into data frame
+metadata <- read.table('data/process/ppi_metadata.txt', header = T, sep = '\t', stringsAsFactors = F) %>% 
+  filter(Group != "NA") #Exclude the mock community'
 
-# Define output files
-plot_file <- 'results/figures/ppi2_cfu.pdf'
-
-#Load in data
-ppi2_data <- readxl::read_excel("data/08_20_18_Omep.#2/08_20_18_Omep._#2_exp.xlsx", sheet = "cfu_final")
+#Function to have y-axis in scientific notation
+fancy_scientific <- function(l) {
+  # turn in to character string in scientific notation
+  l <- format(l, scientific = TRUE)
+  # quote the part before the exponent to keep all the digits
+  l <- gsub("^(.*)e", "'\\1'e", l)
+  # turn the 'e+' into plotmath format
+  l <- gsub("e", "%*%10^", l)
+  # return this as an expression
+  parse(text=l)
+}
 
 #Create data frame of CFU data by selecting group column & columns ending with CFU/g
-ppi2_cfu <- select(ppi2_data, Group, ends_with("CFU/g")) 
-#make sure Group column is a factor vector and all CFU/g are treated as numeric vectors:
-ppi2_cfu$Group <- as.factor(ppi2_cfu$Group)
-str(ppi2_cfu)
+ppi_cfu <- select(metadata, Group, ends_with("CFU.g")) %>% 
+  gather(Day, CFU, -Group) %>% 
+  mutate(Group=factor(Group, levels=c("Clindamycin", "Clindamycin + PPI", "PPI")),
+         Day = as.numeric(str_replace(Day, "^[^.](\\d\\d?)[\\w\\.\\s\\/]+", "\\1")),
+         Day = Day - 7, #Modify day notation so that C. difficile challenge day is represented as day 0.
+         CFU=as.numeric(CFU) + 1) %>% 
+  ungroup
 
-#Format CFU over time
-ppi2_cfu[,2:ncol(ppi2_cfu)] <- log10(ppi2_cfu[,2:ncol(ppi2_cfu)] + 1)
-cfu_median <- aggregate(ppi2_cfu[,2:ncol(ppi2_cfu)], by=list(ppi2_cfu$Group), FUN=quantile, probs=0.5, na.rm = T)
-rownames(cfu_median) <- cfu_median$Group.1
-cfu_median$Group.1 <- NULL
-cfu_median <- as.data.frame(t(cfu_median))
-cfu_q25 <- aggregate(ppi2_cfu[,2:ncol(ppi2_cfu)], by=list(ppi2_cfu$Group), FUN=quantile, probs=0.25, na.rm = T)
-rownames(cfu_q25) <- cfu_q25$Group.1
-cfu_q25$Group.1 <- NULL
-cfu_q25 <- as.data.frame(t(cfu_q25))
-cfu_q75 <- aggregate(ppi2_cfu[,2:ncol(ppi2_cfu)], by=list(ppi2_cfu$Group), FUN=quantile, probs=0.75, na.rm = T)
-rownames(cfu_q75) <- cfu_q75$Group.1
-cfu_q75$Group.1 <- NULL
-cfu_q75 <- as.data.frame(t(cfu_q75))
+ppi_cfu_summary <- ppi_cfu %>% 
+  group_by(Group, Day) %>% filter(!is.na(CFU)) %>% 
+  summarise(median=median(CFU, na.rm = TRUE),
+            mean=mean(CFU, na.rm = TRUE),
+            lci=quantile(CFU, na.rm = TRUE, probs = 0.25),
+            uci=quantile(CFU, na.rm = TRUE, probs = 0.75)) %>% 
+  ungroup
 
-#Plot of CFU over time
-pdf(file=plot_file)
-par(mar=c(4,4,1,1), las=1, mgp=c(2.5, 0.75, 0)) #http://rfunction.com/archives/1302 
-plot(0, type='n', xlab='Days Post-Infection', ylab='Total cfu/g Feces', xaxt='n', yaxt='n', xlim=c(1,7), ylim=c(0,10))
-lines(cfu_median$`C+`, lwd=2.5, col="blue", type='b', pch=19) 
-segments(x0=c(1:7), y0=cfu_q25$`C+`, x1=c(1:7), y1=cfu_q75$`C+`, col="blue", lwd=2.5)
-lines(cfu_median$`CO+`, lwd=2.5, col="grey3", type='b', pch=19) 
-segments(x0=c(1:7), y0=cfu_q25$`CO+`, x1=c(1:7), y1=cfu_q75$`CO+`, col="grey3", lwd=2.5)
-lines(cfu_median$`O+`, lwd=2.5, col="purple", type='b', pch=19) 
-segments(x0=c(1:7), y0=cfu_q25$`O+`, x1=c(1:7), y1=cfu_q75$`O+`, col="purple", lwd=2.5)
-abline(h=2, lwd=2, lty=2)
-axis(side=1, at=c(0:11), labels=c(-1:10))
-axis(side=2, at=seq(0,10,1), labels=c(0, parse(text=paste(rep(10,10), '^', seq(1,10,1), sep=''))), las=1)
-legend(x=5, y=10, legend=c('Clindamycin', 'Clind. + Omep.', 'Omeprazole'),
-       pch=16, col=c("blue", "grey3", "purple"), cex=0.9, pt.cex=1.5)
-text(x=7, y=2.2, 'LOD', cex=0.9)
-dev.off()
-
+#Plot of mean CFU line with dots representing CFU of individual mice
+ggplot(NULL) + 
+  geom_point(ppi_cfu, mapping = aes(x= Day, y = CFU, color=Group, fill=Group), alpha = .04, size = 2, shape = 20, show.legend = FALSE, position = position_dodge(width = 0.6))+
+  geom_line(ppi_cfu_summary, mapping = aes(x=Day, y=mean, color=Group))+
+  geom_linerange(show.legend=FALSE)+
+  geom_hline(yintercept = 100, linetype=2) +
+  labs(x='Days Post C. difficile challenge', y='Mean CFU/g Feces')+
+  geom_text(x = 28, y = 102, color="black", label="LOD")+
+  scale_y_log10(labels=fancy_scientific, breaks = c(10, 100, 10^3, 10^4, 10^5, 10^6, 10^7, 10^8, 10^9))+
+  theme_classic()+
+  theme(legend.position = c(.8, .9)) +
+  ggsave("results/figures/ppi_cfu.png")
