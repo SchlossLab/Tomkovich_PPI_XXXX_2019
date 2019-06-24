@@ -211,7 +211,7 @@ agg_family_data %>%
   geom_hline(yintercept=1/3000, color="gray")+
   geom_boxplot(outlier.shape = NA)+
   geom_jitter(shape=19, size=1, alpha=0.7, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2)) +
-  labs(title="Family significantly associated with treatment group", 
+  labs(title="Families significantly associated with treatment group", 
        x=NULL,
        y="Relative abundance (%)")+
   scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
