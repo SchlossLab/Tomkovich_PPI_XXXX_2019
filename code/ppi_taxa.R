@@ -216,7 +216,26 @@ agg_family_data %>%
        y="Relative abundance (%)")+
   scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
   coord_flip()+
-  theme_classic()
+  theme_classic()+
+  ggsave("results/figures/family_assoc_w_treatment.png")
+
+#Graph the families associated with human PPI use according to the literature [@Imhann2017]
+ppi_family <- c("Enterococcaceae", "Lactobacillaceae", "Micrococcaceae", "Staphylococcaceae", "Streptococcaceae", "Ruminococcaceae")
+agg_family_data %>% 
+  filter(family %in% ppi_family) %>% 
+  mutate(family=factor(family, levels=ppi_family)) %>% 
+  mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
+  ggplot(aes(x= reorder(family, agg_rel_abund), y=agg_rel_abund, color=Group, alpha = day))+
+  geom_hline(yintercept=1/3000, color="gray")+
+  geom_boxplot(outlier.shape = NA)+
+  geom_jitter(shape=19, size=1, alpha=0.7, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2)) +
+  labs(title="Families previously associated with human PPI use", 
+       x=NULL,
+       y="Relative abundance (%)")+
+  scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
+  coord_flip()+
+  theme_classic()+
+  ggsave("results/figures/families_prev_assoc_w_PPIs.png")
 
 #Kruskal_wallis test for genus differences across treatment groups with Benjamini-Hochburg correction 
 genus_tests <- agg_genus_data %>% 
@@ -351,11 +370,11 @@ agg_family_data %>%
   geom_hline(yintercept=1/3000, color="gray")+
   theme_classic()
 
+#Lactobacillaceae family relative abundance over time
 agg_family_data %>% 
   filter(family == "Lactobacillaceae") %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
   select(Group, day, agg_rel_abund, family) %>% 
-  filter(Group == "PPI") %>%
   ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
   geom_point()+
   geom_line()+
@@ -395,11 +414,11 @@ agg_family_data %>%
   geom_hline(yintercept=1/3000, color="gray")+
   theme_classic()
 
+#Ruminococcaceae family over time
 agg_family_data %>% 
-  filter(family == "Ruminoccoccaeae") %>% 
+  filter(family == "Ruminococcaceae") %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
   select(Group, day, agg_rel_abund, family) %>% 
-  filter(Group == "PPI") %>%
   ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
   geom_point()+
   geom_line()+
