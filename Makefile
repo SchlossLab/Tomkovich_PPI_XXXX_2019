@@ -33,28 +33,36 @@ print-%:
 # We will use the SEED v. 132, which contain 12,083 bacterial sequences. This
 # also contains the reference taxonomy. We will limit the databases to only
 # include bacterial sequences.
+wget -N https://mothur.org/w/images/7/71/Silva.seed_v132.tgz
+tar xvzf Silva.seed_v132.tgz silva.seed_v132.align silva.seed_v132.tax
+mothur "#get.lineage(fasta=silva.seed_v132.align, taxonomy=silva.seed_v132.tax, taxon=Bacteria);degap.seqs(fasta=silva.seed_v132.pick.align, processors=8)"
+mv silva.seed_v132.pick.align data/references/silva.seed.align
+rm Silva.seed_v132.tgz silva.seed_v132.*
 
-$(REFS)/silva.seed.align :
-	wget -N https://mothur.org/w/images/7/71/Silva.seed_v132.tgz
-	tar xvzf Silva.seed_v132.tgz silva.seed_v132.align silva.seed_v132.tax
-	mothur "#get.lineage(fasta=silva.seed_v132.align, taxonomy=silva.seed_v132.tax, taxon=Bacteria);degap.seqs(fasta=silva.seed_v132.pick.align, processors=8)"
-	mv silva.seed_v132.pick.align $(REFS)/silva.seed.align
-	rm Silva.seed_v132.tgz silva.seed_v132.*
-
-$(REFS)/silva.v4.align : $(REFS)/silva.seed.align
-	mothur "#pcr.seqs(fasta=$(REFS)/silva.seed.align, start=11894, end=25319, keepdots=F, processors=8)"
-	mv $(REFS)/silva.seed.pcr.align $(REFS)/silva.v4.align
+#Narrow to v4 region
+mothur "#pcr.seqs(fasta=data/references/silva.seed.align, start=11894, end=25319, keepdots=F, processors=8)"
+mv data/references/silva.seed.pcr.align data/references/silva.v4.align
 
 # Next, we want the RDP reference taxonomy. The current version is v10 and we
 # use a "special" pds version of the database files, which are described at
 # http://blog.mothur.org/2017/03/15/RDP-v16-reference_files/
 
-$(REFS)/trainset16_022016.% :
-	wget -N https://www.mothur.org/w/images/c/c3/Trainset16_022016.pds.tgz
-	tar xvzf Trainset16_022016.pds.tgz trainset16_022016.pds
-	mv trainset16_022016.pds/* $(REFS)/
-	rm -rf trainset16_022016.pds
-	rm Trainset16_022016.pds.tgz
+wget -N https://www.mothur.org/w/images/c/c3/Trainset16_022016.pds.tgz
+tar xvzf Trainset16_022016.pds.tgz trainset16_022016.pds
+mv trainset16_022016.pds/* data/references/
+rm -rf trainset16_022016.pds
+rm Trainset16_022016.pds.tgz
+
+
+# We need to get the Zymo mock community data; note that Zymo named the 5 operon of Salmonella twice instead of the 7 operon
+wget -N https://s3.amazonaws.com/zymo-files/BioPool/ZymoBIOMICS.STD.refseq.v2.zip
+unzip ZymoBIOMICS.STD.refseq.v2.zip
+rm ZymoBIOMICS.STD.refseq.v2/ssrRNAs/*itochondria_ssrRNA.fasta #V4 primers don't come close to annealing to these
+cat ZymoBIOMICS.STD.refseq.v2/ssrRNAs/*fasta > zymo_temp.fasta
+sed '0,/Salmonella_enterica_16S_5/{s/Salmonella_enterica_16S_5/Salmonella_enterica_16S_7/}' zymo_temp.fasta > zymo.fasta
+mothur "#align.seqs(fasta=zymo.fasta, reference=data/references/silva.v4.align, processors=12)"
+mv zymo.align data/references/zymo_mock.align
+rm -rf zymo* ZymoBIOMICS.STD.refseq.v2* zymo_temp.fasta
 
 ################################################################################
 #
@@ -72,36 +80,23 @@ BASIC_STEM = data/mothur/ppi.trim.contigs.good.unique.good.filter.unique.preclus
 # taxonomy, and count_table file that has had the chimeras removed as well as
 # any non bacterial sequences.
 
-# Edit code/get_good_seqs.batch to include the proper name of your *files file
-$(BASIC_STEM).denovo.uchime.pick.pick.count_table $(BASIC_STEM).pick.pick.fasta $(BASIC_STEM).pick.pds.wang.pick.taxonomy : code/get_good_seqs.batch\
-					data/references/silva.v4.align\
-					data/references/trainset16_022016.pds.fasta\
-					data/references/trainset16_022016.pds.tax
-	mothur code/get_good_seqs.batch;\
-	rm data/mothur/*.map
-
-
+# Edit code/get_good_seqs.batch to include the proper name of your *files file. Prefix = ppi
+mothur code/get_good_seqs.batch
+rm data/mothur/*.map
 
 # here we go from the good sequences and generate a shared file and a
 # cons.taxonomy file based on OTU data
 
-# Edit code/get_shared_otus.batch to include the proper root name of your files file
-# Edit code/get_shared_otus.batch to include the proper group names to remove
+mothur code/get_shared_otus.batch
+        rm data/mothur/ppi.trim.contigs.good.unique.good.filter.unique.precluster.denovo.uchime.pick.pick.pick.count_table
+        rm data/mothur/ppi.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.pick.fasta
+        rm data/mothur/ppi.trim.contigs.good.unique.good.filter.unique.precluster.pick.pds.wang.pick.pick.taxonomy
 
-$(BASIC_STEM).pick.pick.pick.opti_mcc.unique_list.shared $(BASIC_STEM).pick.pick.pick.opti_mcc.unique_list.0.03.cons.taxonomy : code/get_shared_otus.batch\
-					$(BASIC_STEM).denovo.uchime.pick.pick.count_table\
-					$(BASIC_STEM).pick.pick.fasta\
-					$(BASIC_STEM).pick.pds.wang.pick.taxonomy
-	mothur code/get_shared_otus.batch
-	rm $(BASIC_STEM).denovo.uchime.pick.pick.pick.count_table
-	rm $(BASIC_STEM).pick.pick.pick.fasta
-	rm $(BASIC_STEM).pick.pds.wang.pick.pick.taxonomy;
+#Calculate overall error rate by comparing Mock sequences to Mock reference community from Zymo:
+mothur code/get_error.batch
 
-# Alpha and beta diversity analysis
-data/mothur/ppi.opti_mcc.thetayc.0.03.lt.ave.nmds.axes data/mothur/ppi.opti_mcc.0.03.subsample.shared :\
-		data/mothur/ppi.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.opti_mcc.shared\
-		code/ppi_alpha_beta.batch 
-	mothur code/ppi_alpha_beta.batch 
+# Alpha and Beta diversity analysis
+mothur code/ppi_alpha_beta.batch
 
 # now we want to get the sequencing error as seen in the mock community samples
 
