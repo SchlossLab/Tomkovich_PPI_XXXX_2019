@@ -74,8 +74,6 @@ before_abx <- pcoa %>% filter(day < -1) %>%
   theme(plot.title = element_text(hjust = 0.5))+
   ggsave("results/figures/before_abx.png")
   
-  
-
 #plot before abx with D0 removed
 pcoa %>% filter(day < -1) %>% filter(day > -7) %>% 
   ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
