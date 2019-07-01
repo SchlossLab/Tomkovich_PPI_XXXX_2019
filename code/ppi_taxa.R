@@ -379,7 +379,9 @@ agg_family_data %>%
   geom_point()+
   geom_line()+
   geom_hline(yintercept=1/3000, color="gray")+
-  theme_classic()
+  labs(title="Lactobacillaceae") +
+  theme_classic()+
+  ggsave("results/figures/lactobacillaceae_time.png")
 
 agg_family_data %>% 
   filter(family == "Micrococcaceae") %>% 
@@ -423,7 +425,9 @@ agg_family_data %>%
   geom_point()+
   geom_line()+
   geom_hline(yintercept=1/3000, color="gray")+
-  theme_classic()
+  labs(title="Ruminococcaceae") +
+  theme_classic()+
+  ggsave("results/figures/ruminococcaceae_time.png")
 
 agg_family_data %>% 
   filter(family == "Lachnospiraceae") %>% 
