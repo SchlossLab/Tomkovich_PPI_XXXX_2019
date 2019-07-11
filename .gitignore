@@ -14,3 +14,5 @@ mothur*logfile
 *.docx
 *.jpg
 *.png
+
+.httr-oauth
