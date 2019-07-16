@@ -13,7 +13,7 @@ metadata <- read.table('data/process/ppi_metadata.txt', header = T, sep = '\t', 
          sex = M.F,
          exp_cage_number = Exp..cage,
          mouse_id = Mouse.ID) %>% 
-  filter(sample_title, description, collection_date, experiment_day, sex, mouse_id, exp_cage_number, shared_names) #Select columns that are missing from mimarks tsv file
+  select(sample_title, description, collection_date, sex, experiment_day, mouse_id, exp_cage_number, shared_names) #Select columns that are missing from mimarks tsv file
 
 
 # Import MIMARKS ppi.tsv file into data frame
