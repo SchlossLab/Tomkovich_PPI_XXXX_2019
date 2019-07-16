@@ -39,7 +39,7 @@ metadata <- read_xlsx('data/raw/PPI_metadata.xlsx') %>%
                            Group == 'CO+' ~ 'Clindamycin + PPI')) 
   # select only the samples that are present in the shared data
 matching <- inner_join(metadata, shared_sample_names, by = c('shared_names' = 'Group')) 
-  
+
 # What's missing from metadata shared_names compared to shared_sample_names
 missing <- anti_join(shared_sample_names, metadata, by = c('Group' = 'shared_names'))
 # COpos+D6+unk and Opos+M5+D9 on shared_sample_names did not match to fixed_shared_names
