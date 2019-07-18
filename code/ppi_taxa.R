@@ -19,6 +19,12 @@ library(tidyverse)
 library(broom)
 library(cowplot)
 
+# Define color palette:
+color_scheme <- c("#d95f02", "#1b9e77", "#7570b3")
+color_ppi <-  c("#7570b3") # Use for graphs looking at just the PPI group over time
+color_cppi <- c("#1b9e77") # Use for graphs looking at just the Clindamycin + PPI group over time
+color_c <- c("#d95f02") # Use for graphs looking at just the Clindamycin group over time
+
 # Import metadata into data frame
 metadata <- read.table('data/process/ppi_metadata.txt', header = T, sep = '\t', stringsAsFactors = F) %>% 
   filter(Group != "NA") #Exclude the mock community
@@ -49,6 +55,7 @@ metadata_rarefy <- inner_join(metadata, rarefy, by = c("shared_names" = "sample"
 #Plotting----
 #Plot rarefaction curves, the more parallel the curves to the x axis, the more confident you can be in the results
 ggplot(metadata_rarefy, aes(x=numsampled, y=sobs, group=shared_names, color=Group))+
+  scale_colour_manual(values=color_scheme) +
   geom_vline(xintercept=3000, color="gray", size=2) +
   geom_line()+
   coord_cartesian(xlim=c(0, 10000), ylim=c(0,200))+
@@ -88,9 +95,10 @@ agg_phylum_data %>%
   filter(phylum %in% top_phyla) %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
   ggplot(aes(x= reorder(phylum, agg_rel_abund), y=agg_rel_abund, color=Group))+
+  scale_colour_manual(values=color_scheme) +
   geom_hline(yintercept=1/3000, color="gray")+
   geom_boxplot(outlier.shape = NA)+
-  geom_jitter(shape=19, size=1, alpha=0.7, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2)) +
+  geom_jitter(shape=19, size=1, alpha=0.4, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2)) +
   labs(title=NULL, 
        x=NULL,
        y="Relative abundance (%)")+
@@ -127,9 +135,10 @@ agg_genus_data %>%
   filter(genus %in% top_genus) %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
   ggplot(aes(x= reorder(genus, agg_rel_abund), y=agg_rel_abund, color=Group)) +
+  scale_colour_manual(values=color_scheme) +
   geom_hline(yintercept=1/3000, color="gray")+
   geom_boxplot(outlier.shape = NA)+
-  geom_jitter(shape=19, size=1, alpha=0.7, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.1)) +
+  geom_jitter(shape=19, size=1, alpha=0.4, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.1)) +
   labs(title=NULL, 
        x=NULL,
        y="Relative abundance (%)")+
@@ -143,6 +152,7 @@ agg_genus_data %>%
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
   select(Group, day, agg_rel_abund, genus) %>% 
   ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
+  scale_colour_manual(values=color_scheme) +
   facet_wrap("genus")+
   geom_point()+
   geom_line()+
@@ -156,6 +166,7 @@ agg_genus_data %>%
   select(Group, day, agg_rel_abund, genus) %>% 
   filter(Group == "PPI") %>% 
   ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
+  scale_colour_manual(values=color_ppi) +
   facet_wrap("genus")+
   geom_point()+
   geom_line()+
@@ -181,9 +192,10 @@ agg_phylum_data %>%
   mutate(phylum=factor(phylum, levels=sig_phyla)) %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
   ggplot(aes(x= reorder(phylum, agg_rel_abund), y=agg_rel_abund, color=Group))+
+  scale_colour_manual(values=color_scheme) +
   geom_hline(yintercept=1/3000, color="gray")+
   geom_boxplot(outlier.shape = NA)+
-  geom_jitter(shape=19, size=1, alpha=0.7, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2)) +
+  geom_jitter(shape=19, size=1, alpha=0.4, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2)) +
   labs(title="Phyla significantly associated with treatment group", 
        x=NULL,
        y="Relative abundance (%)")+
@@ -208,9 +220,10 @@ agg_family_data %>%
   mutate(family=factor(family, levels=sig_family)) %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
   ggplot(aes(x= reorder(family, agg_rel_abund), y=agg_rel_abund, color=Group, alpha = day))+
+  scale_colour_manual(values=color_scheme) +
   geom_hline(yintercept=1/3000, color="gray")+
   geom_boxplot(outlier.shape = NA)+
-  geom_jitter(shape=19, size=1, alpha=0.7, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2)) +
+  geom_jitter(shape=19, size=1, alpha=0.4, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2)) +
   labs(title="Families significantly associated with treatment group", 
        x=NULL,
        y="Relative abundance (%)")+
@@ -226,9 +239,10 @@ agg_family_data %>%
   mutate(family=factor(family, levels=ppi_family)) %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
   ggplot(aes(x= reorder(family, agg_rel_abund), y=agg_rel_abund, color=Group, alpha = day))+
+  scale_colour_manual(values=color_scheme) +
   geom_hline(yintercept=1/3000, color="gray")+
   geom_boxplot(outlier.shape = NA)+
-  geom_jitter(shape=19, size=1, alpha=0.7, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2)) +
+  geom_jitter(shape=19, size=1, alpha=0.4, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2)) +
   labs(title="Families previously associated with human PPI use", 
        x=NULL,
        y="Relative abundance (%)")+
@@ -255,9 +269,10 @@ agg_genus_data %>%
   mutate(genus=factor(genus, levels=sig_genus)) %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
   ggplot(aes(x= reorder(genus, agg_rel_abund), y=agg_rel_abund, color=Group))+
+  scale_colour_manual(values=color_scheme) +
   geom_hline(yintercept=1/3000, color="gray")+
   geom_boxplot(outlier.shape = NA)+
-  geom_jitter(shape=19, size=1, alpha=0.6, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2)) +
+  geom_jitter(shape=19, size=1, alpha=0.4, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2)) +
   labs(title="Genera significantly associated with treatment group", 
        x=NULL,
        y="Relative abundance (%)")+
@@ -286,19 +301,56 @@ agg_phylum_data %>%
   mutate(phylum=factor(phylum, levels=ppi_sig_phyla)) %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
   ggplot(aes(x= reorder(phylum, agg_rel_abund), y=agg_rel_abund, color=Group))+
+  scale_colour_manual(values=color_ppi) +
   geom_hline(yintercept=1/3000, color="gray")+
   geom_boxplot(outlier.shape = NA)+
-  geom_jitter(shape=19, size=1, alpha=0.7, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2)) +
+  geom_jitter(shape=19, size=1, alpha=0.4, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2)) +
   labs(title="Phyla significantly different after 16 days of PPI treatment", 
        x=NULL,
        y="Relative abundance (%)")+
   scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
   theme_classic()
+#No significant phyla so no graph.
+
+#Kruskal_wallis test for family differences across time in the PPI group with Benjamini-Hochburg correction 
+ppi_family_tests <- agg_family_data %>% 
+  group_by(family) %>% 
+  filter(Group == "PPI", day %in% c("-7", "0", "9")) %>%
+  do(tidy(kruskal.test(agg_rel_abund~factor(day), data=.))) %>% ungroup() %>% 
+  mutate(p.value.adj=p.adjust(p.value, method="BH")) %>% 
+  arrange(p.value.adj)
+
+#List the significant family across time in the PPI group after Benjamini-Hochburg correction
+ppi_sig_family <- ppi_family_tests %>% 
+  filter(p.value.adj <= 0.05) %>% 
+  pull(family)
+
+#No significant genera after Benjamini-Hochburg correction. Select the genera with the lowest corrected p values
+top_7_ppi <- top_n(ppi_family_tests, -7, p.value.adj) %>%  #negative to pull rows with the lowest values
+  pull(family)
+
+#Graph the 7 genera with the lowest Benjamini-Hochburg corrected P-values across time in the PPI group
+agg_family_data %>% 
+  filter(family %in% top_7_ppi) %>% 
+  filter(Group == "PPI", day %in% c("-7", "0", "9")) %>%
+  mutate(family=factor(family, levels=top_7_ppi)) %>% 
+  mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
+  ggplot(aes(x= reorder(family, agg_rel_abund), y=agg_rel_abund, color=day))+
+  geom_hline(yintercept=1/3000, color="gray")+
+  geom_boxplot(outlier.shape = NA)+
+  geom_jitter(shape=19, size=1, alpha=0.7, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2)) +
+  labs(title=NULL, 
+       x=NULL,
+       y="Relative abundance (%)")+
+  scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
+  coord_flip()+
+  theme_classic()+
+  ggsave("results/figures/ppi_family_time.png")
 
 #Kruskal_wallis test for genus differences across time in the PPI group with Benjamini-Hochburg correction 
 ppi_genus_tests <- agg_genus_data %>% 
   group_by(genus) %>% 
-  filter(Group == "PPI", day %in% c("-7", "9")) %>%
+  filter(Group == "PPI", day %in% c("-7", "0", "9")) %>%
   do(tidy(kruskal.test(agg_rel_abund~factor(day), data=.))) %>% ungroup() %>% 
   mutate(p.value.adj=p.adjust(p.value, method="BH")) %>% 
   arrange(p.value.adj)
@@ -308,21 +360,55 @@ ppi_sig_genus <- ppi_genus_tests %>%
   filter(p.value.adj <= 0.05) %>% 
   pull(genus)
 
-#Graph genera across time in the PPI group
+#No significant genera after Benjamini-Hochburg correction. Select the genera with the lowest corrected p values
+top_13_ppi <- top_n(ppi_genus_tests, -13, p.value.adj) %>%  #negative to pull rows with the lowest values
+  pull(genus)
+
+#Graph the 13 genera with the lowest Benjamini-Hochburg corrected P-values across time in the PPI group
 agg_genus_data %>% 
-  filter(genus %in% ppi_genus_tests) %>% 
-  filter(Group == "PPI", day %in% c("-7", "9")) %>%
-  mutate(genus=factor(genus, levels=ppi_genus_tests)) %>% 
+  filter(genus %in% top_13_ppi) %>% 
+  filter(Group == "PPI", day %in% c("-7", "0", "9")) %>%
+  mutate(genus=factor(genus, levels=top_13_ppi)) %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
   ggplot(aes(x= reorder(genus, agg_rel_abund), y=agg_rel_abund, color=day))+
   geom_hline(yintercept=1/3000, color="gray")+
   geom_boxplot(outlier.shape = NA)+
   geom_jitter(shape=19, size=1, alpha=0.7, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2)) +
-  labs(title="Genera levels over time in PPI treatment", 
+  labs(title=NULL, 
        x=NULL,
        y="Relative abundance (%)")+
   scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
+  coord_flip()+
+  theme_classic()+
+  ggsave("results/figures/ppi_genera_time.png")
+
+#Graph Porphyromonadaceae Unclassified over time
+agg_genus_data %>% 
+  filter(genus == "Porphyromonadaceae Unclassified") %>% 
+  mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
+  select(Group, day, agg_rel_abund, genus) %>% 
+  ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
+  scale_colour_manual(values=color_scheme) +
+  geom_point()+
+  geom_line()+
+  geom_hline(yintercept=1/3000, color="gray")+
+  labs(title="Porphyromonadaceae Unclassified") +
   theme_classic()
+##  ggsave("results/figures/XXXgenera_time.png")
+
+#Graph Lachnospiraceae Unclassified over time
+agg_genus_data %>% 
+  filter(genus == "Lachnospiraceae Unclassified") %>% 
+  mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
+  select(Group, day, agg_rel_abund, genus) %>% 
+  ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
+  scale_colour_manual(values=color_scheme) +
+  geom_point()+
+  geom_line()+
+  geom_hline(yintercept=1/3000, color="gray")+
+  labs(title="Lachnospiraceae Unclassified") +
+  theme_classic()
+##  ggsave("results/figures/XXXgenera_time.png")
 
 agg_genus_data %>% 
   filter(genus == "Ruminococcus") %>% 
@@ -330,6 +416,7 @@ agg_genus_data %>%
   select(Group, day, agg_rel_abund, genus) %>% 
 ##  filter(Group == "PPI") %>%
   ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
+  scale_colour_manual(values=color_scheme) +
   geom_point()+
   geom_line()+
   geom_hline(yintercept=1/3000, color="gray")+
@@ -341,6 +428,7 @@ agg_genus_data %>%
   select(Group, day, agg_rel_abund, genus) %>% 
 ##  filter(Group == "PPI") %>%
   ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
+  scale_colour_manual(values=color_scheme) +
   geom_point()+
   geom_line()+
   geom_line(position=position_dodge(width=0.2))+ #Show lines from all groups
@@ -353,6 +441,7 @@ agg_genus_data %>%
   select(Group, day, agg_rel_abund, genus) %>% 
   filter(Group == "PPI") %>%
   ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
+  scale_colour_manual(values=color_ppi) +
   geom_point()+
   geom_line()+
   geom_hline(yintercept=1/3000, color="gray")+
@@ -365,6 +454,7 @@ agg_family_data %>%
   select(Group, day, agg_rel_abund, family) %>% 
   filter(Group == "PPI") %>%
   ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
+  scale_colour_manual(values=color_ppi) +
   geom_point()+
   geom_line()+
   geom_hline(yintercept=1/3000, color="gray")+
@@ -376,6 +466,7 @@ agg_family_data %>%
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
   select(Group, day, agg_rel_abund, family) %>% 
   ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
+  scale_colour_manual(values=color_scheme) +
   geom_point()+
   geom_line()+
   geom_hline(yintercept=1/3000, color="gray")+
@@ -389,6 +480,7 @@ agg_family_data %>%
   select(Group, day, agg_rel_abund, family) %>% 
   filter(Group == "PPI") %>%
   ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
+  scale_colour_manual(values=color_ppi) +
   geom_point()+
   geom_line()+
   geom_hline(yintercept=1/3000, color="gray")+
@@ -400,6 +492,7 @@ agg_family_data %>%
   select(Group, day, agg_rel_abund, family) %>% 
   filter(Group == "PPI") %>%
   ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
+  scale_colour_manual(values=color_ppi) +
   geom_point()+
   geom_line()+
   geom_hline(yintercept=1/3000, color="gray")+
@@ -411,6 +504,7 @@ agg_family_data %>%
   select(Group, day, agg_rel_abund, family) %>% 
   filter(Group == "PPI") %>%
   ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
+  scale_colour_manual(values=color_ppi) +
   geom_point()+
   geom_line()+
   geom_hline(yintercept=1/3000, color="gray")+
@@ -422,6 +516,7 @@ agg_family_data %>%
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
   select(Group, day, agg_rel_abund, family) %>% 
   ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
+  scale_colour_manual(values=color_scheme) +
   geom_point()+
   geom_line()+
   geom_hline(yintercept=1/3000, color="gray")+
@@ -435,6 +530,7 @@ agg_family_data %>%
   select(Group, day, agg_rel_abund, family) %>% 
   filter(Group == "PPI") %>%
   ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
+  scale_colour_manual(values=color_ppi) +
   geom_point()+
   geom_line()+
   geom_hline(yintercept=1/3000, color="gray")+
