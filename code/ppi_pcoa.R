@@ -35,6 +35,7 @@ pcoa %>%
   ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
   scale_colour_manual(values=color_scheme) +
   geom_point() +
+  geom_path() +
   theme_classic()+
   labs(title="All groups, all timepoints") +
   theme(plot.title = element_text(hjust = 0.5))
@@ -45,6 +46,7 @@ pcoa %>% filter(Group == "PPI") %>%
   ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
   scale_colour_manual(values=color_ppi) +
   geom_point()+
+  geom_path() +
   theme_classic() +
   labs(title="PPI-treated mice") +
   theme(plot.title = element_text(hjust = 0.5))
@@ -54,6 +56,7 @@ pcoa %>% filter(Group == "PPI") %>%  filter(day < 8) %>%
   ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
   scale_colour_manual(values=color_ppi) +
   geom_point()+
+  geom_path() +
   theme_classic() +
   labs(title="PPI-treated mice over first 7 days") +
   theme(plot.title = element_text(hjust = 0.5))
@@ -63,6 +66,7 @@ pcoa %>% filter(Group == "Clindamycin") %>%
   ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
   scale_colour_manual(values=color_c) +
   geom_point() +
+  geom_path() +
   theme_classic()+
   labs(title="Clindamycin-treated mice") +
   theme(plot.title = element_text(hjust = 0.5))
@@ -72,6 +76,7 @@ pcoa %>% filter(Group == "Clindamycin + PPI") %>%
   ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
   scale_colour_manual(values=color_cppi) +
   geom_point() +
+  geom_path() +
   theme_classic() +
   labs(title="Clindamycin/PPI treated mice") +
   theme(plot.title = element_text(hjust = 0.5))
@@ -81,6 +86,7 @@ before_abx <- pcoa %>% filter(day < -1) %>%
   ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
   scale_colour_manual(values=color_scheme) +
   geom_point() +
+  geom_path() +
   theme_classic() +
   labs(title="Before antibiotic treatment") +
   theme(plot.title = element_text(hjust = 0.5))+
@@ -91,6 +97,7 @@ pcoa %>% filter(day < -1) %>% filter(day > -7) %>%
   ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
   scale_colour_manual(values=color_scheme) +
   geom_point() +
+  geom_path() +
   theme_classic()+
   labs(title="Before antibiotic treatment without initial baseline day") +
   theme(plot.title = element_text(hjust = 0.5))
@@ -100,6 +107,7 @@ before_plus_day_after_abx <- pcoa %>%	filter(day < 1) %>%
   ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
   scale_colour_manual(values=color_scheme) +
   geom_point() +
+  geom_path() +
   theme_classic()+
   labs(title="Before antibiotic treatment + 1 day after") +
   theme(plot.title = element_text(hjust = 0.5))+
@@ -110,6 +118,7 @@ pcoa %>% filter(day < 1) %>%
   ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
   scale_colour_manual(values=color_scheme) +
   geom_point() +
+  geom_path() +
   theme_classic()+
   labs(title="Days before C. difficile challenge including antibiotic treatment") +
   theme(plot.title = element_text(hjust = 0.5))
@@ -119,6 +128,7 @@ pcoa %>% filter(day > 1) %>%
   ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
   scale_colour_manual(values=color_scheme) +
   geom_point() +
+  geom_path() +
   theme_classic() +
   labs(title="After antibiotic treatment & C. difficile challenge") +
   theme(plot.title = element_text(hjust = 0.5))+
