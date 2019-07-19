@@ -187,7 +187,7 @@ sig_phyla <- phylum_tests %>%
   pull(phylum)
 
 #Graph the significant phyla based on treatment groups after Benjamini-Hochburg correction
-agg_phylum_data %>% 
+group_phyla <- agg_phylum_data %>% 
   filter(phylum %in% sig_phyla) %>% 
   mutate(phylum=factor(phylum, levels=sig_phyla)) %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
@@ -215,7 +215,7 @@ sig_family <- family_tests %>%
   pull(family)
 
 #Graph the significant family based on treatment groups after Benjamini-Hochburg correction
-agg_family_data %>% 
+group_family <- agg_family_data %>% 
   filter(family %in% sig_family) %>% 
   mutate(family=factor(family, levels=sig_family)) %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
@@ -234,7 +234,7 @@ agg_family_data %>%
 
 #Graph the families associated with human PPI use according to the literature [@Imhann2017]
 ppi_family <- c("Enterococcaceae", "Lactobacillaceae", "Micrococcaceae", "Staphylococcaceae", "Streptococcaceae", "Ruminococcaceae")
-agg_family_data %>% 
+ppi_family <- agg_family_data %>% 
   filter(family %in% ppi_family) %>% 
   mutate(family=factor(family, levels=ppi_family)) %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
@@ -264,7 +264,7 @@ sig_genus <- genus_tests %>%
   pull(genus)
 
 #Graph the significant genera based on treatment groups after Benjamini-Hochburg correction
-agg_genus_data %>% 
+group_genera <- agg_genus_data %>% 
   filter(genus %in% sig_genus) %>% 
   mutate(genus=factor(genus, levels=sig_genus)) %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
@@ -295,7 +295,7 @@ ppi_sig_phyla <- ppi_phylum_tests %>%
   pull(phylum)
 
 #Graph the significant phyla over time in the PPI treatment group after Benjamini-Hochburg correction
-agg_phylum_data %>% 
+ppi_phyla_time <- agg_phylum_data %>% 
   filter(phylum %in% ppi_sig_phyla) %>% 
   filter(Group == "PPI", day %in% c("-7", "0", "9")) %>%
   mutate(phylum=factor(phylum, levels=ppi_sig_phyla)) %>% 
@@ -325,20 +325,20 @@ ppi_sig_family <- ppi_family_tests %>%
   filter(p.value.adj <= 0.05) %>% 
   pull(family)
 
-#No significant genera after Benjamini-Hochburg correction. Select the genera with the lowest corrected p values
+#No significant families after Benjamini-Hochburg correction. Select the families with the lowest corrected p values
 top_7_ppi <- top_n(ppi_family_tests, -7, p.value.adj) %>%  #negative to pull rows with the lowest values
   pull(family)
 
-#Graph the 7 genera with the lowest Benjamini-Hochburg corrected P-values across time in the PPI group
-agg_family_data %>% 
+#Graph the 7 families with the lowest Benjamini-Hochburg corrected P-values across time in the PPI group
+ppi_family_time <- agg_family_data %>% 
   filter(family %in% top_7_ppi) %>% 
   filter(Group == "PPI", day %in% c("-7", "0", "9")) %>%
   mutate(family=factor(family, levels=top_7_ppi)) %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
-  ggplot(aes(x= reorder(family, agg_rel_abund), y=agg_rel_abund, color=day))+
+  ggplot(aes(x= reorder(family, agg_rel_abund), y=agg_rel_abund, color = color_ppi))+
   geom_hline(yintercept=1/3000, color="gray")+
   geom_boxplot(outlier.shape = NA)+
-  geom_jitter(shape=19, size=1, alpha=0.7, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2)) +
+  geom_jitter(aes(alpha=day), shape=19, size=1, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2), show.legend = NA) +
   labs(title=NULL, 
        x=NULL,
        y="Relative abundance (%)")+
@@ -365,7 +365,7 @@ top_13_ppi <- top_n(ppi_genus_tests, -13, p.value.adj) %>%  #negative to pull ro
   pull(genus)
 
 #Graph the 13 genera with the lowest Benjamini-Hochburg corrected P-values across time in the PPI group
-agg_genus_data %>% 
+ppi_genus_time <- agg_genus_data %>% 
   filter(genus %in% top_13_ppi) %>% 
   filter(Group == "PPI", day %in% c("-7", "0", "9")) %>%
   mutate(genus=factor(genus, levels=top_13_ppi)) %>% 
@@ -383,7 +383,7 @@ agg_genus_data %>%
   ggsave("results/figures/ppi_genera_time.png")
 
 #Graph Porphyromonadaceae Unclassified over time
-agg_genus_data %>% 
+porpy_uncl_time <- agg_genus_data %>% 
   filter(genus == "Porphyromonadaceae Unclassified") %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
   select(Group, day, agg_rel_abund, genus) %>% 
@@ -397,7 +397,7 @@ agg_genus_data %>%
 ##  ggsave("results/figures/XXXgenera_time.png")
 
 #Graph Lachnospiraceae Unclassified over time
-agg_genus_data %>% 
+lacno_uncl_time <- agg_genus_data %>% 
   filter(genus == "Lachnospiraceae Unclassified") %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
   select(Group, day, agg_rel_abund, genus) %>% 
@@ -410,7 +410,7 @@ agg_genus_data %>%
   theme_classic()
 ##  ggsave("results/figures/XXXgenera_time.png")
 
-agg_genus_data %>% 
+ruminoc_genus_time <- agg_genus_data %>% 
   filter(genus == "Ruminococcus") %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
   select(Group, day, agg_rel_abund, genus) %>% 
@@ -422,7 +422,7 @@ agg_genus_data %>%
   geom_hline(yintercept=1/3000, color="gray")+
   theme_classic()
 
-agg_genus_data %>% 
+enteroc_genus_time <- agg_genus_data %>% 
   filter(genus == "Enterococcus") %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
   select(Group, day, agg_rel_abund, genus) %>% 
@@ -435,7 +435,7 @@ agg_genus_data %>%
   geom_hline(yintercept=1/3000, color="gray")+
   theme_classic()
 
-agg_genus_data %>% 
+strep_genus_time <- agg_genus_data %>% 
   filter(genus == "Streptococcus") %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
   select(Group, day, agg_rel_abund, genus) %>% 
@@ -448,7 +448,7 @@ agg_genus_data %>%
   theme_classic()
 
 #Plots of families of bacteria that are associated with PPI use in humans
-agg_family_data %>% 
+enteroc_family_time <- agg_family_data %>% 
   filter(family == "Enterococcaceae") %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
   select(Group, day, agg_rel_abund, family) %>% 
@@ -461,7 +461,7 @@ agg_family_data %>%
   theme_classic()
 
 #Lactobacillaceae family relative abundance over time
-agg_family_data %>% 
+lacto_family_time <- agg_family_data %>% 
   filter(family == "Lactobacillaceae") %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
   select(Group, day, agg_rel_abund, family) %>% 
@@ -474,7 +474,7 @@ agg_family_data %>%
   theme_classic()+
   ggsave("results/figures/lactobacillaceae_time.png")
 
-agg_family_data %>% 
+mi_family_time <- agg_family_data %>% 
   filter(family == "Micrococcaceae") %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
   select(Group, day, agg_rel_abund, family) %>% 
@@ -486,7 +486,7 @@ agg_family_data %>%
   geom_hline(yintercept=1/3000, color="gray")+
   theme_classic()
 
-agg_family_data %>% 
+staph_family_time <- agg_family_data %>% 
   filter(family == "Staphylococcaeae") %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
   select(Group, day, agg_rel_abund, family) %>% 
@@ -498,7 +498,7 @@ agg_family_data %>%
   geom_hline(yintercept=1/3000, color="gray")+
   theme_classic()
 
-agg_family_data %>% 
+strep_family_time <- agg_family_data %>% 
   filter(family == "Streptococcaceae") %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
   select(Group, day, agg_rel_abund, family) %>% 
@@ -511,7 +511,7 @@ agg_family_data %>%
   theme_classic()
 
 #Ruminococcaceae family over time
-agg_family_data %>% 
+r_family_time <- agg_family_data %>% 
   filter(family == "Ruminococcaceae") %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
   select(Group, day, agg_rel_abund, family) %>% 
@@ -525,7 +525,7 @@ agg_family_data %>%
   ggsave("results/figures/ruminococcaceae_time.png")
 
 agg_family_data %>% 
-  filter(family == "Lachnospiraceae") %>% 
+l_family_time <- filter(family == "Lachnospiraceae") %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
   select(Group, day, agg_rel_abund, family) %>% 
   filter(Group == "PPI") %>%

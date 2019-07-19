@@ -3,6 +3,9 @@ library(tidyverse)
 library(vegan)
 library(cowplot)
 
+# Define color palette:
+color_scheme <- c("#d95f02", "#1b9e77", "#7570b3")
+
 # Import metadata into data frame
 metadata <- read.table('data/process/ppi_metadata.txt', header = T, sep = '\t', stringsAsFactors = F) %>% 
   filter(Group != "NA") #Exclude the mock community'
@@ -40,6 +43,7 @@ ppi_cfu_summary <- ppi_cfu %>%
 ggplot(NULL) + 
   geom_point(ppi_cfu, mapping = aes(x= Day, y = CFU, color=Group, fill=Group), alpha = .04, size = 2, shape = 20, show.legend = FALSE, position = position_dodge(width = 0.6))+
   geom_line(ppi_cfu_summary, mapping = aes(x=Day, y=mean, color=Group))+
+  scale_colour_manual(values=color_scheme) +
   geom_linerange(show.legend=FALSE)+
   geom_hline(yintercept = 100, linetype=2) +
   labs(x='Days Post C. difficile challenge', y='Mean CFU/g Feces')+
