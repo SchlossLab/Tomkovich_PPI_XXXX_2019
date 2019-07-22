@@ -29,6 +29,7 @@ color_c <- c("#d95f02") # Use for graphs looking at just the Clindamycin group o
 metadata <- read.table('data/process/ppi_metadata.txt', header = T, sep = '\t', stringsAsFactors = F) %>% 
   filter(Group != "NA") #Exclude the mock community
 
+  
 # Import taxonomy into data frame and clean up taxonomy names
 taxonomy <- read_tsv(file="data/mothur/ppi.taxonomy") %>%
   rename_all(tolower) %>% #remove uppercase from column names
@@ -50,7 +51,9 @@ rarefy <- read_tsv(file="data/mothur/ppi.opti_mcc.groups.rarefaction") %>%
 
 #Join metadata to rarefy data frame
 metadata_rarefy <- inner_join(metadata, rarefy, by = c("shared_names" = "sample")) %>% 
-  filter(Group != "NA") 
+  filter(Group != "NA") %>% 
+  mutate(Group = as.factor(Group)) # make sure Group is treated as a factor
+
 
 #Plotting----
 #Plot rarefaction curves, the more parallel the curves to the x axis, the more confident you can be in the results
@@ -186,6 +189,15 @@ sig_phyla <- phylum_tests %>%
   filter(p.value.adj <= 0.05) %>% 
   pull(phylum)
 
+#Pairwise wilcox test to determine which comparisons are significantly different
+wilcox_phylum_tests <- agg_phylum_data %>% 
+  group_by(phylum) %>% 
+  filter(phylum %in% sig_phyla) %>% 
+  select(phylum, Group, agg_rel_abund) 
+wilcox_phylum_tests <- wilcox_phylum_tests %>% 
+  do(tidy(pairwise.wilcox.test(g=wilcox_phylum_tests[["Group"]], x=wilcox_phylum_tests[["agg_rel_abund"]], p.adjust.method = "BH")))
+# Warning messages: cannot compute exact p value with ties
+
 #Graph the significant phyla based on treatment groups after Benjamini-Hochburg correction
 group_phyla <- agg_phylum_data %>% 
   filter(phylum %in% sig_phyla) %>% 
@@ -213,6 +225,14 @@ family_tests <- agg_family_data %>%
 sig_family <- family_tests %>% 
   filter(p.value.adj <= 0.05) %>% 
   pull(family)
+
+#Pairwise wilcox test to determine which comparisons are significantly different
+wilcox_family_tests <- agg_family_data %>% 
+  group_by(family) %>% 
+  filter(family %in% sig_family) %>% 
+  select(family, Group, agg_rel_abund) 
+wilcox_family_tests <- wilcox_family_tests %>% 
+  do(tidy(pairwise.wilcox.test(g=wilcox_family_tests[["Group"]], x=wilcox_family_tests[["agg_rel_abund"]], p.adjust.method = "BH")))
 
 #Graph the significant family based on treatment groups after Benjamini-Hochburg correction
 group_family <- agg_family_data %>% 
@@ -262,6 +282,15 @@ genus_tests <- agg_genus_data %>%
 sig_genus <- genus_tests %>% 
   filter(p.value.adj <= 0.05) %>% 
   pull(genus)
+
+#Pairwise wilcox test to determine which comparisons are significantly different
+wilcox_genus_tests <- agg_genus_data %>% 
+  group_by(genus) %>% 
+  filter(genus %in% sig_genus) %>% 
+  select(genus, Group, agg_rel_abund) 
+wilcox_genus_tests <- wilcox_genus_tests %>%
+  do(tidy(pairwise.wilcox.test(g=wilcox_genus_tests[["Group"]], x=wilcox_genus_tests[["agg_rel_abund"]], p.adjust.method = "BH")))
+
 
 #Graph the significant genera based on treatment groups after Benjamini-Hochburg correction
 group_genera <- agg_genus_data %>% 
@@ -335,11 +364,13 @@ ppi_family_time <- agg_family_data %>%
   filter(Group == "PPI", day %in% c("-7", "0", "9")) %>%
   mutate(family=factor(family, levels=top_7_ppi)) %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
-  ggplot(aes(x= reorder(family, agg_rel_abund), y=agg_rel_abund, color = color_ppi))+
+  ggplot(aes(x= reorder(family, agg_rel_abund), y=agg_rel_abund, color = Group))+
+  scale_colour_manual(values=color_ppi)+
+  scale_alpha_continuous(range=c(0.2, 1))+
   geom_hline(yintercept=1/3000, color="gray")+
   geom_boxplot(outlier.shape = NA)+
   geom_jitter(aes(alpha=day), shape=19, size=1, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2), show.legend = NA) +
-  labs(title=NULL, 
+  labs(title="7 families with lowest adjusted P values (0.45 < P < 0.65) after comparing across timepoints", 
        x=NULL,
        y="Relative abundance (%)")+
   scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
@@ -370,11 +401,13 @@ ppi_genus_time <- agg_genus_data %>%
   filter(Group == "PPI", day %in% c("-7", "0", "9")) %>%
   mutate(genus=factor(genus, levels=top_13_ppi)) %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
-  ggplot(aes(x= reorder(genus, agg_rel_abund), y=agg_rel_abund, color=day))+
+  ggplot(aes(x= reorder(genus, agg_rel_abund), y=agg_rel_abund, color = Group))+
+  scale_colour_manual(values=color_ppi)+
+  scale_alpha_continuous(range=c(0.2, 1))+
   geom_hline(yintercept=1/3000, color="gray")+
   geom_boxplot(outlier.shape = NA)+
-  geom_jitter(shape=19, size=1, alpha=0.7, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2)) +
-  labs(title=NULL, 
+  geom_jitter(aes(alpha=day), shape=19, size=1, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2), show.legend = NA) +
+  labs(title="13 genera with lowest adjusted P values (P = 0.568) after comparing across timepoints", 
        x=NULL,
        y="Relative abundance (%)")+
   scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+

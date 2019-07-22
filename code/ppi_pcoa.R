@@ -126,7 +126,7 @@ pcoa %>% filter(day < 1) %>%
   geom_point() +
 #  geom_path() + #Add's lines to plots but looks messy
   theme_classic()+
-  labs(title="Timepoints before spore challenge") +
+  labs(title="PCoA of timepoints before spore challenge") +
   theme(plot.title = element_text(hjust = 0.5))+
   theme(legend.position="none")
   ggsave("results/figures/before_C._diff_challenge.png")
@@ -140,7 +140,7 @@ pcoa %>% filter(day > 1) %>%
   geom_point() +
 #  geom_path() + #Add's lines to plots but looks messy
   theme_classic() +
-  labs(title="After spore challenge") +
+  labs(title="PCoA after spore challenge") +
   theme(plot.title = element_text(hjust = 0.5))+
   theme(legend.position="none")
   ggsave("results/figures/after_abx_C.diff.png")
