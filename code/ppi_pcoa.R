@@ -15,7 +15,9 @@
 library(tidyverse)
 library(cowplot)
 
-metadata <- read.table('data/process/ppi_metadata.txt', header = T, sep = '\t', stringsAsFactors = F)
+metadata <- read.table('data/process/ppi_metadata.txt', header = T, sep = '\t', stringsAsFactors = F) %>% 
+  mutate(abx_status = if_else(day > -8 & day < 0, "pre", "post")) %>% # Create a column to differentiate between timepoints that are from before or after exposure to the antibiotic clindamycin
+  mutate(c.diff_colonized = if_else(D9.C..difficile.CFU.g > 0, "colonized", "resistant")) # Create a column to differentiate mice that were colonized with C. difficile from mice that were resistant. Based off of D9 (2 day post challenge) CFU counts.
 
 # read in pcoa data
 pcoa <- read_tsv('data/mothur/ppi.opti_mcc.braycurtis.0.03.lt.ave.pcoa.axes') %>%
@@ -35,7 +37,7 @@ pcoa %>%
   ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
   scale_colour_manual(values=color_scheme) +
   geom_point() +
-  geom_path() +
+#  geom_path() + #Add's lines to plots but looks messy  
   theme_classic()+
   labs(title="All groups, all timepoints") +
   theme(plot.title = element_text(hjust = 0.5))
@@ -46,7 +48,7 @@ pcoa %>% filter(Group == "PPI") %>%
   ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
   scale_colour_manual(values=color_ppi) +
   geom_point()+
-  geom_path() +
+#  geom_path() + #Add's lines to plots but looks messy
   theme_classic() +
   labs(title="PPI-treated mice") +
   theme(plot.title = element_text(hjust = 0.5))
@@ -56,7 +58,7 @@ pcoa %>% filter(Group == "PPI") %>%  filter(day < 8) %>%
   ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
   scale_colour_manual(values=color_ppi) +
   geom_point()+
-  geom_path() +
+#  geom_path() + #Add's lines to plots but looks messy
   theme_classic() +
   labs(title="PPI-treated mice over first 7 days") +
   theme(plot.title = element_text(hjust = 0.5))
@@ -66,7 +68,7 @@ pcoa %>% filter(Group == "Clindamycin") %>%
   ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
   scale_colour_manual(values=color_c) +
   geom_point() +
-  geom_path() +
+#  geom_path() + #Add's lines to plots but looks messy 
   theme_classic()+
   labs(title="Clindamycin-treated mice") +
   theme(plot.title = element_text(hjust = 0.5))
@@ -76,7 +78,7 @@ pcoa %>% filter(Group == "Clindamycin + PPI") %>%
   ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
   scale_colour_manual(values=color_cppi) +
   geom_point() +
-  geom_path() +
+#  geom_path() + #Add's lines to plots but looks messy
   theme_classic() +
   labs(title="Clindamycin/PPI treated mice") +
   theme(plot.title = element_text(hjust = 0.5))
@@ -86,7 +88,7 @@ before_abx <- pcoa %>% filter(day < -1) %>%
   ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
   scale_colour_manual(values=color_scheme) +
   geom_point() +
-  geom_path() +
+#  geom_path() + #Add's lines to plots but looks messy
   theme_classic() +
   labs(title="Before antibiotic treatment") +
   theme(plot.title = element_text(hjust = 0.5))+
@@ -97,7 +99,7 @@ pcoa %>% filter(day < -1) %>% filter(day > -7) %>%
   ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
   scale_colour_manual(values=color_scheme) +
   geom_point() +
-  geom_path() +
+#  geom_path() + #Add's lines to plots but looks messy
   theme_classic()+
   labs(title="Before antibiotic treatment without initial baseline day") +
   theme(plot.title = element_text(hjust = 0.5))
@@ -107,30 +109,35 @@ before_plus_day_after_abx <- pcoa %>%	filter(day < 1) %>%
   ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
   scale_colour_manual(values=color_scheme) +
   geom_point() +
-  geom_path() +
+#  geom_path() + #Add's lines to plots but looks messy
   theme_classic()+
   labs(title="Before antibiotic treatment + 1 day after") +
   theme(plot.title = element_text(hjust = 0.5))+
   ggsave("results/figures/before_plus_day_after_abx.png")
 
-# plot 1st 7 days: Includes abx treatment day
+# plot 1st 7 days: Includes abx treatment day. Pre-clindamycin treatment represented by circles.
+# Post-clindamycin treatment represented by open diamonds.
 pcoa %>% filter(day < 1) %>%	
-  ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
+  ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day, shape = abx_status)) +
   scale_colour_manual(values=color_scheme) +
+  scale_shape_manual(values=c(5, 19)) +
   geom_point() +
-  geom_path() +
+#  geom_path() + #Add's lines to plots but looks messy
   theme_classic()+
-  labs(title="Days before C. difficile challenge including antibiotic treatment") +
-  theme(plot.title = element_text(hjust = 0.5))
+  labs(title="Timepoints before spore challenge") +
+  theme(plot.title = element_text(hjust = 0.5))+
+  ggsave("results/figures/before_C._diff_challenge.png")
 
-# plot after abx & C. diff
+# plot after abx & C. diff. Colonized mice are represented by x shapes. Resistant mice are represented as circles.
 pcoa %>% filter(day > 1) %>% 
-  ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
+  ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day, shape = c.diff_colonized)) +
   scale_colour_manual(values=color_scheme) +
+  scale_shape_manual(values=c(4, 19)) +
   geom_point() +
-  geom_path() +
+#  geom_path() + #Add's lines to plots but looks messy
   theme_classic() +
   labs(title="After antibiotic treatment & C. difficile challenge") +
   theme(plot.title = element_text(hjust = 0.5))+
+  theme(legend.position="none")
   ggsave("results/figures/after_abx_C.diff.png")
 
