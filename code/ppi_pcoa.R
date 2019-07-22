@@ -108,6 +108,7 @@ pcoa %>% filter(day < -1) %>% filter(day > -7) %>%
 before_plus_day_after_abx <- pcoa %>%	filter(day < 1) %>% 
   ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day)) +
   scale_colour_manual(values=color_scheme) +
+  scale_alpha_continuous(range = c(.2, 1))+
   geom_point() +
 #  geom_path() + #Add's lines to plots but looks messy
   theme_classic()+
@@ -121,11 +122,13 @@ pcoa %>% filter(day < 1) %>%
   ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day, shape = abx_status)) +
   scale_colour_manual(values=color_scheme) +
   scale_shape_manual(values=c(5, 19)) +
+  scale_alpha_continuous(range = c(.3, 1))+
   geom_point() +
 #  geom_path() + #Add's lines to plots but looks messy
   theme_classic()+
   labs(title="Timepoints before spore challenge") +
   theme(plot.title = element_text(hjust = 0.5))+
+  theme(legend.position="none")
   ggsave("results/figures/before_C._diff_challenge.png")
 
 # plot after abx & C. diff. Colonized mice are represented by x shapes. Resistant mice are represented as circles.
@@ -133,10 +136,11 @@ pcoa %>% filter(day > 1) %>%
   ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day, shape = c.diff_colonized)) +
   scale_colour_manual(values=color_scheme) +
   scale_shape_manual(values=c(4, 19)) +
+  scale_alpha_continuous(range = c(.3, 1))+
   geom_point() +
 #  geom_path() + #Add's lines to plots but looks messy
   theme_classic() +
-  labs(title="After antibiotic treatment & C. difficile challenge") +
+  labs(title="After spore challenge") +
   theme(plot.title = element_text(hjust = 0.5))+
   theme(legend.position="none")
   ggsave("results/figures/after_abx_C.diff.png")
