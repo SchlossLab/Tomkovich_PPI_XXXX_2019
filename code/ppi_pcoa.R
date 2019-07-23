@@ -16,7 +16,7 @@ library(tidyverse)
 library(cowplot)
 
 metadata <- read.table('data/process/ppi_metadata.txt', header = T, sep = '\t', stringsAsFactors = F) %>% 
-  mutate(abx_status = if_else(day > -8 & day < 1, "pre", "post")) %>% # Create a column to differentiate between timepoints that are from before or after exposure to the antibiotic clindamycin
+  mutate(abx_status = if_else(day > -8 & day < 0, "pre", "post")) %>% # Create a column to differentiate between timepoints that are from before or after exposure to the antibiotic clindamycin
   mutate(c.diff_colonized = if_else(D9.C..difficile.CFU.g > 0, "colonized", "resistant")) # Create a column to differentiate mice that were colonized with C. difficile from mice that were resistant. Based off of D9 (2 day post challenge) CFU counts.
 
 # read in pcoa data
@@ -129,7 +129,7 @@ pcoa %>% filter(day < 1) %>%
   labs(title="PCoA of timepoints before spore challenge") +
   theme(plot.title = element_text(hjust = 0.5))+
   theme(legend.position="none")
-  ggsave("results/figures/before_C._diff_challenge.png")
+  ggsave("results/figures/before_C._diff_challenge.png", width = 2, height = 2)
 
 # plot after abx & C. diff. Colonized mice are represented by x shapes. Resistant mice are represented as circles.
 pcoa %>% filter(day > 1) %>% 
@@ -143,5 +143,5 @@ pcoa %>% filter(day > 1) %>%
   labs(title="PCoA after spore challenge") +
   theme(plot.title = element_text(hjust = 0.5))+
   theme(legend.position="none")
-  ggsave("results/figures/after_abx_C.diff.png")
+  ggsave("results/figures/after_abx_C.diff.png", , width = 2, height = 2)
 
