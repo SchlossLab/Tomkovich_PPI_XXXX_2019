@@ -16,7 +16,7 @@ library(tidyverse)
 library(cowplot)
 
 metadata <- read.table('data/process/ppi_metadata.txt', header = T, sep = '\t', stringsAsFactors = F) %>% 
-  mutate(abx_status = if_else(day > -8 & day < 0, "pre", "post")) %>% # Create a column to differentiate between timepoints that are from before or after exposure to the antibiotic clindamycin
+  mutate(abx_status = if_else(day > -8 & day < 1, "pre", "post")) %>% # Create a column to differentiate between timepoints that are from before or after exposure to the antibiotic clindamycin
   mutate(c.diff_colonized = if_else(D9.C..difficile.CFU.g > 0, "colonized", "resistant")) # Create a column to differentiate mice that were colonized with C. difficile from mice that were resistant. Based off of D9 (2 day post challenge) CFU counts.
 
 # read in pcoa data
