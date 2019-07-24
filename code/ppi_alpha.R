@@ -137,7 +137,7 @@ c <- groups_day_alpha %>%
        y="Shannon")+
   ylim(0, 3.5)+
   theme_classic()+
-  theme(legend.position = c(0.9, 0.2))
+  theme(legend.position = c(0.8, 0.2))
 save_plot("results/figures/groups_shannon.png", c) #Use save_plot instead of ggsave because it works better with cowplot
 
 # Figure S2B----
@@ -155,7 +155,7 @@ f <- groups_day_alpha %>%
        y="richness")+
   ylim(0, 100)+
   theme_classic()+
-  theme(legend.position = c(0.9, 0.2))
+  theme(legend.position = c(0.8, 0.2))
 save_plot("results/figures/groups_richness.png", f) #Use save_plot instead of ggsave because it works better with cowplot
 
 shannon_sobs <- plot_grid(a, b, c, d, e, f, labels = "AUTO") +
