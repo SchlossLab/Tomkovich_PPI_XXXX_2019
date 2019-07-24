@@ -122,29 +122,41 @@ before_plus_day_after_abx <- pcoa %>%	filter(day < 1) %>%
 pcoa_before_challenge <- pcoa %>% 
   filter(day < 1) %>%	
   ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day, shape = abx_status)) +
-  scale_colour_manual(values=color_scheme) +
-  scale_shape_manual(values=c(5, 19)) +
+  scale_colour_manual(name=NULL, 
+                      values=color_scheme, 
+                      breaks=c("Clindamycin", "Clindamycin + PPI", "PPI"),
+                      labels=c("Clindamycin", "Clindamycin + PPI", "PPI")) +
+  scale_shape_manual(name="Antibiotic\nTreatment",
+                     values=c(5, 19),
+                     breaks=c("pre", "post"),
+                     labels=c("Pre-", "Post-")) +
   scale_alpha_continuous(range = c(.3, 1))+
+  labs(alpha = "Day")+
   geom_point() +
   theme_classic()+
   labs(title="PCoA of fecal samples taken from timepoints before spore challenge") +
-  theme(plot.title = element_text(hjust = 0.5))+
-  theme(legend.position="none")
+  theme(plot.title = element_text(hjust = 0.5))
 save_plot("results/figures/before_C._diff_challenge.png", pcoa_before_challenge, base_aspect_ratio = 2) #Use save_plot over ggsave because it works better with cowplot
 
 # Figure 2B----
+shape_legend <-c(expression(paste(italic("C. difficile"), "\nstatus"))) #Expression variable for the title so that bacteria name will be in italics
 # plot after abx & C. diff. Colonized mice are represented by x shapes. Resistant mice are represented as circles.
 pcoa_after_challenge <- pcoa %>% 
   filter(day > 1) %>% 
   ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day, shape = c.diff_colonized)) +
-  scale_colour_manual(values=color_scheme) +
-  scale_shape_manual(values=c(4, 19)) +
+  scale_colour_manual(name=NULL, 
+                       values=color_scheme, 
+                       breaks=c("Clindamycin", "Clindamycin + PPI", "PPI"),
+                       labels=c("Clindamycin", "Clindamycin + PPI", "PPI")) +
+  scale_shape_manual(name=shape_legend,
+                     values=c(4, 19),
+                     breaks=c("colonized", "resistant"),
+                     labels=c("colonized", "resistant")) +
   scale_alpha_continuous(range = c(.3, 1))+
+  labs(alpha = "Day")+
   geom_point() +
-#  geom_path() + #Add's lines to plots but looks messy
   theme_classic() +
   labs(title="PCoA of fecal samples from timepoints after spore challenge") +
-  theme(plot.title = element_text(hjust = 0.5))+
-  theme(legend.position="none")
+  theme(plot.title = element_text(hjust = 0.5))
 save_plot("results/figures/after_abx_C.diff.png", pcoa_after_challenge, base_aspect_ratio = 2)
 
