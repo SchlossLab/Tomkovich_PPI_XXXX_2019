@@ -116,23 +116,26 @@ before_plus_day_after_abx <- pcoa %>%	filter(day < 1) %>%
   theme(plot.title = element_text(hjust = 0.5))+
   ggsave("results/figures/before_plus_day_after_abx.png")
 
+# Figure 1B----
 # plot 1st 7 days: Includes abx treatment day. Pre-clindamycin treatment represented by circles.
 # Post-clindamycin treatment represented by open diamonds.
-pcoa %>% filter(day < 1) %>%	
+pcoa_before_challenge <- pcoa %>% 
+  filter(day < 1) %>%	
   ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day, shape = abx_status)) +
   scale_colour_manual(values=color_scheme) +
   scale_shape_manual(values=c(5, 19)) +
   scale_alpha_continuous(range = c(.3, 1))+
   geom_point() +
-#  geom_path() + #Add's lines to plots but looks messy
   theme_classic()+
-  labs(title="PCoA of timepoints before spore challenge") +
+  labs(title="PCoA of fecal samples taken from timepoints before spore challenge") +
   theme(plot.title = element_text(hjust = 0.5))+
   theme(legend.position="none")
-  ggsave("results/figures/before_C._diff_challenge.png", width = 2, height = 2)
+save_plot("results/figures/before_C._diff_challenge.png", pcoa_before_challenge, base_aspect_ratio = 2) #Use save_plot over ggsave because it works better with cowplot
 
+# Figure 2B----
 # plot after abx & C. diff. Colonized mice are represented by x shapes. Resistant mice are represented as circles.
-pcoa %>% filter(day > 1) %>% 
+pcoa_after_challenge <- pcoa %>% 
+  filter(day > 1) %>% 
   ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day, shape = c.diff_colonized)) +
   scale_colour_manual(values=color_scheme) +
   scale_shape_manual(values=c(4, 19)) +
@@ -140,8 +143,8 @@ pcoa %>% filter(day > 1) %>%
   geom_point() +
 #  geom_path() + #Add's lines to plots but looks messy
   theme_classic() +
-  labs(title="PCoA after spore challenge") +
+  labs(title="PCoA of fecal samples from timepoints after spore challenge") +
   theme(plot.title = element_text(hjust = 0.5))+
   theme(legend.position="none")
-  ggsave("results/figures/after_abx_C.diff.png", , width = 2, height = 2)
+save_plot("results/figures/after_abx_C.diff.png", pcoa_after_challenge, base_aspect_ratio = 2)
 

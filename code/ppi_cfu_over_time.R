@@ -39,16 +39,20 @@ ppi_cfu_summary <- ppi_cfu %>%
             uci=quantile(CFU, na.rm = TRUE, probs = 0.75)) %>% 
   ungroup
 
+# Figure 2A----
 #Plot of mean CFU line with dots representing CFU of individual mice
+title <-c(expression(paste(italic("C. difficile"), " colonization over time"))) #Expression variable for the title so that bacteria name will be in italics
 ggplot(NULL) + 
   geom_point(ppi_cfu, mapping = aes(x= Day, y = CFU, color=Group, fill=Group), alpha = .04, size = 2, shape = 20, show.legend = FALSE, position = position_dodge(width = 0.6))+
   geom_line(ppi_cfu_summary, mapping = aes(x=Day, y=mean, color=Group))+
   scale_colour_manual(values=color_scheme) +
   geom_linerange(show.legend=FALSE)+
   geom_hline(yintercept = 100, linetype=2) +
-  labs(x='Days Post C. difficile challenge', y='Mean CFU/g Feces')+
+  labs(x='Days Post-Infection', y='CFU/g Feces')+
   geom_text(x = 28, y = 102, color="black", label="LOD")+
   scale_y_log10(labels=fancy_scientific, breaks = c(10, 100, 10^3, 10^4, 10^5, 10^6, 10^7, 10^8, 10^9))+
   theme_classic()+
-  theme(legend.position = c(.8, .9)) +
-  ggsave("results/figures/ppi_cfu.png")
+  theme(legend.position = c(.8, .8)) +
+  labs(title=title) +
+  theme(plot.title=element_text(hjust=0.5))+
+  ggsave("results/figures/ppi_cfu.png", width = 3, height = 2)

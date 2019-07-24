@@ -255,7 +255,7 @@ group_family <- agg_family_data %>%
   theme_classic()+
   theme(plot.title=element_text(hjust=.5))+
   theme(legend.title=element_blank(), legend.position = c(0.85, 0.15)) #Get rid of legend title & move legend position
-save_plot("results/figures/family_assoc_w_treatment.png", group_family, base_aspect_ratio = 1.5) #Use save_plot instead of ggsave because it's more compatible with cowplot
+save_plot("results/figures/family_assoc_w_treatment.png", group_family, base_aspect_ratio = 2) #Use save_plot instead of ggsave because it's more compatible with cowplot
 
 # Figure 1C----
 #Graph the families associated with human PPI use according to the literature [@Imhann2017]
@@ -277,8 +277,8 @@ ppi_family_plot <- agg_family_data %>%
   theme_classic()+
   theme(plot.title=element_text(hjust=0.5))+
   theme(plot.title=element_text(hjust=0.5))+
-  theme(legend.title=element_blank(), legend.position = c(0.85, 0.15)) #Ger rid of legend title & move legend position
-save_plot("results/figures/families_prev_assoc_w_PPIs.png", ppi_family_plot, base_aspect_ratio = 1.5)
+  theme(legend.title=element_blank(), legend.position = c(0.9, 0.15)) #Ger rid of legend title & move legend position
+save_plot("results/figures/families_prev_assoc_w_PPIs.png", ppi_family_plot, base_aspect_ratio = 2)
 
 #Kruskal_wallis test for genus differences across treatment groups with Benjamini-Hochburg correction 
 genus_tests <- agg_genus_data %>% 
@@ -320,7 +320,7 @@ group_genera <- agg_genus_data %>%
   theme(axis.text.y = element_text(face = "italic"))+ #Have the genera show up as italics
   theme(plot.title=element_text(hjust=0.5))+
   theme(legend.title=element_blank(), legend.position = c(0.85, 0.2)) #Ger rid of legend title & move legend position
-save_plot("results/figures/genera_assoc_w_treatment.png", group_genera, base_aspect_ratio = 1.6)
+save_plot("results/figures/genera_assoc_w_treatment.png", group_genera, base_aspect_ratio = 2)
    
 #Kruskal_wallis test with Benjamini-Hochburg correction for phylum differences across time in the PPI treatment group 
 ppi_phylum_tests <- agg_phylum_data %>% 
