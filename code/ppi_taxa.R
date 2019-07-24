@@ -24,6 +24,7 @@ color_scheme <- c("#d95f02", "#1b9e77", "#7570b3")
 color_ppi <-  c("#7570b3") # Use for graphs looking at just the PPI group over time
 color_cppi <- c("#1b9e77") # Use for graphs looking at just the Clindamycin + PPI group over time
 color_c <- c("#d95f02") # Use for graphs looking at just the Clindamycin group over time
+color_day <- c('#c7c5e0' ,"#7570b3", "#514e7d") # Tints and Shades of PPI color for graphs showing relative abundances over time
 
 # Import metadata into data frame
 metadata <- read.table('data/process/ppi_metadata.txt', header = T, sep = '\t', stringsAsFactors = F) %>% 
@@ -37,6 +38,7 @@ taxonomy <- read_tsv(file="data/mothur/ppi.taxonomy") %>%
   mutate(taxonomy=str_replace_all(taxonomy, c("\\(\\d*\\)" = "", #drop digits with parentheses around them
                                               ';$' = "", #removes semi-colon at end of line
                                               'Bacteria_unclassified' = 'Unclassified',
+                                              "Clostridium_" = "Clostridium ", #Remove underscores after Clostridium
                                               "_unclassified" = " Unclassified"))) %>% 
 # Separate taxonomic levels into separate columns according to semi-colon.
   separate(taxonomy, into=c("kingdom", "phylum", "class", "order", "family", "genus"), sep=';')
@@ -72,7 +74,7 @@ otu_data <- read_tsv("data/mothur/ppi.opti_mcc.0.03.subsample.shared", col_types
   select(-label, -numOtus) %>% 
   rename(shared_names=Group) %>% 
   gather(-shared_names, key="otu", value="count") %>% 
-  mutate(rel_abund=count/3000) 
+  mutate(rel_abund=count/3000) #Use 3000, because this is the subsampling parameter chosen.
 
 # Merge otu_data to taxonomy data frame
 agg_taxa_data <- inner_join(otu_data, taxonomy) 
@@ -234,6 +236,7 @@ wilcox_family_tests <- agg_family_data %>%
 wilcox_family_tests <- wilcox_family_tests %>% 
   do(tidy(pairwise.wilcox.test(g=wilcox_family_tests[["Group"]], x=wilcox_family_tests[["agg_rel_abund"]], p.adjust.method = "BH")))
 
+#Figure 2D----
 #Graph the significant family based on treatment groups after Benjamini-Hochburg correction
 group_family <- agg_family_data %>% 
   filter(family %in% sig_family) %>% 
@@ -250,11 +253,14 @@ group_family <- agg_family_data %>%
   scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
   coord_flip()+
   theme_classic()+
-  ggsave("results/figures/family_assoc_w_treatment.png")
+  theme(plot.title=element_text(hjust=.5))+
+  theme(legend.title=element_blank(), legend.position = c(0.85, 0.15)) #Get rid of legend title & move legend position
+save_plot("results/figures/family_assoc_w_treatment.png", group_family, base_aspect_ratio = 1.5) #Use save_plot instead of ggsave because it's more compatible with cowplot
 
+# Figure 1C----
 #Graph the families associated with human PPI use according to the literature [@Imhann2017]
 ppi_family <- c("Enterococcaceae", "Lactobacillaceae", "Micrococcaceae", "Staphylococcaceae", "Streptococcaceae", "Ruminococcaceae")
-ppi_family <- agg_family_data %>% 
+ppi_family_plot <- agg_family_data %>% 
   filter(family %in% ppi_family) %>% 
   mutate(family=factor(family, levels=ppi_family)) %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
@@ -269,7 +275,10 @@ ppi_family <- agg_family_data %>%
   scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
   coord_flip()+
   theme_classic()+
-  ggsave("results/figures/families_prev_assoc_w_PPIs.png")
+  theme(plot.title=element_text(hjust=0.5))+
+  theme(plot.title=element_text(hjust=0.5))+
+  theme(legend.title=element_blank(), legend.position = c(0.85, 0.15)) #Ger rid of legend title & move legend position
+save_plot("results/figures/families_prev_assoc_w_PPIs.png", ppi_family_plot, base_aspect_ratio = 1.5)
 
 #Kruskal_wallis test for genus differences across treatment groups with Benjamini-Hochburg correction 
 genus_tests <- agg_genus_data %>% 
@@ -291,7 +300,7 @@ wilcox_genus_tests <- agg_genus_data %>%
 wilcox_genus_tests <- wilcox_genus_tests %>%
   do(tidy(pairwise.wilcox.test(g=wilcox_genus_tests[["Group"]], x=wilcox_genus_tests[["agg_rel_abund"]], p.adjust.method = "BH")))
 
-
+# Figure 2C----
 #Graph the significant genera based on treatment groups after Benjamini-Hochburg correction
 group_genera <- agg_genus_data %>% 
   filter(genus %in% sig_genus) %>% 
@@ -308,7 +317,10 @@ group_genera <- agg_genus_data %>%
   scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
   coord_flip()+
   theme_classic()+
-  ggsave("results/figures/genera_assoc_w_treatment.png")
+  theme(axis.text.y = element_text(face = "italic"))+ #Have the genera show up as italics
+  theme(plot.title=element_text(hjust=0.5))+
+  theme(legend.title=element_blank(), legend.position = c(0.85, 0.2)) #Ger rid of legend title & move legend position
+save_plot("results/figures/genera_assoc_w_treatment.png", group_genera, base_aspect_ratio = 1.6)
    
 #Kruskal_wallis test with Benjamini-Hochburg correction for phylum differences across time in the PPI treatment group 
 ppi_phylum_tests <- agg_phylum_data %>% 
@@ -358,25 +370,30 @@ ppi_sig_family <- ppi_family_tests %>%
 top_7_ppi <- top_n(ppi_family_tests, -7, p.value.adj) %>%  #negative to pull rows with the lowest values
   pull(family)
 
+# Figure 1D----
 #Graph the 7 families with the lowest Benjamini-Hochburg corrected P-values across time in the PPI group
 ppi_family_time <- agg_family_data %>% 
   filter(family %in% top_7_ppi) %>% 
   filter(Group == "PPI", day %in% c("-7", "0", "9")) %>%
-  mutate(family=factor(family, levels=top_7_ppi)) %>% 
+  mutate(family=factor(family, levels=top_7_ppi)) %>%
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
-  ggplot(aes(x= reorder(family, agg_rel_abund), y=agg_rel_abund, color = Group))+
-  scale_colour_manual(values=color_ppi)+
-  scale_alpha_continuous(range=c(0.2, 1))+
+  ggplot(aes(x= reorder(family, agg_rel_abund), y=agg_rel_abund, color = factor(day, ordered = TRUE, levels =c("-7", "0", "9"))))+ #Turn day into a factor to use set of discrete colors
+  scale_colour_manual(name="Day",
+                      values=color_day,
+                      breaks=c("-7", "0", "9"),
+                      labels=c("-7", "0", "9"))+
   geom_hline(yintercept=1/3000, color="gray")+
   geom_boxplot(outlier.shape = NA)+
-  geom_jitter(aes(alpha=day), shape=19, size=1, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2), show.legend = NA) +
-  labs(title="7 families with lowest adjusted P values (0.45 < P < 0.65) after comparing across timepoints", 
+  geom_jitter(shape=19, size=1, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2), show.legend = NA) +
+  labs(title="7 families with lowest adjusted P values (0.45 < P < 0.65) after comparing \n across 3 timepoints", #Break up title into multiple lines with \n
        x=NULL,
        y="Relative abundance (%)")+
   scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
   coord_flip()+
   theme_classic()+
-  ggsave("results/figures/ppi_family_time.png")
+  theme(legend.position = c(0.9, 0.2))+ #Move legend position
+  theme(plot.title=element_text(hjust=.5))
+save_plot("results/figures/ppi_family_time.png", ppi_family_time, base_aspect_ratio = 2)
 
 #Kruskal_wallis test for genus differences across time in the PPI group with Benjamini-Hochburg correction 
 ppi_genus_tests <- agg_genus_data %>% 
@@ -395,25 +412,31 @@ ppi_sig_genus <- ppi_genus_tests %>%
 top_13_ppi <- top_n(ppi_genus_tests, -13, p.value.adj) %>%  #negative to pull rows with the lowest values
   pull(genus)
 
+#Figure S1C----
 #Graph the 13 genera with the lowest Benjamini-Hochburg corrected P-values across time in the PPI group
 ppi_genus_time <- agg_genus_data %>% 
   filter(genus %in% top_13_ppi) %>% 
   filter(Group == "PPI", day %in% c("-7", "0", "9")) %>%
   mutate(genus=factor(genus, levels=top_13_ppi)) %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
-  ggplot(aes(x= reorder(genus, agg_rel_abund), y=agg_rel_abund, color = Group))+
-  scale_colour_manual(values=color_ppi)+
-  scale_alpha_continuous(range=c(0.2, 1))+
+  ggplot(aes(x= reorder(genus, agg_rel_abund), y=agg_rel_abund, color = factor(day, ordered = TRUE, levels =c("-7", "0", "9"))))+
+  scale_colour_manual(name="Day",
+                      values=color_day,
+                      breaks=c("-7", "0", "9"),
+                      labels=c("-7", "0", "9"))+
   geom_hline(yintercept=1/3000, color="gray")+
   geom_boxplot(outlier.shape = NA)+
-  geom_jitter(aes(alpha=day), shape=19, size=1, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2), show.legend = NA) +
-  labs(title="13 genera with lowest adjusted P values (P = 0.568) after comparing across timepoints", 
+  geom_jitter(shape=19, size=1, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2), show.legend = NA) +
+  labs(title="13 genera with lowest adjusted P values (P = 0.568) after comparing across 3 timepoints", 
        x=NULL,
        y="Relative abundance (%)")+
   scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
   coord_flip()+
   theme_classic()+
-  ggsave("results/figures/ppi_genera_time.png")
+  theme(plot.title=element_text(hjust=.5))+ #Adjust plot title to fit graph
+  theme(axis.text.y = element_text(face = "italic"))+ #Have the genera show up as italics
+  theme(legend.position = c(0.9, 0.2)) #Move legend position
+save_plot("results/figures/ppi_genera_time.png", ppi_genus_time, base_aspect_ratio = 2.4)
 
 #Graph Porphyromonadaceae Unclassified over time
 porpy_uncl_time <- agg_genus_data %>% 
@@ -422,12 +445,12 @@ porpy_uncl_time <- agg_genus_data %>%
   select(Group, day, agg_rel_abund, genus) %>% 
   ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
   scale_colour_manual(values=color_scheme) +
+  scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
   geom_point()+
   geom_line()+
   geom_hline(yintercept=1/3000, color="gray")+
   labs(title="Porphyromonadaceae Unclassified") +
   theme_classic()
-##  ggsave("results/figures/XXXgenera_time.png")
 
 #Graph Lachnospiraceae Unclassified over time
 lacno_uncl_time <- agg_genus_data %>% 
@@ -436,12 +459,12 @@ lacno_uncl_time <- agg_genus_data %>%
   select(Group, day, agg_rel_abund, genus) %>% 
   ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
   scale_colour_manual(values=color_scheme) +
+  scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
   geom_point()+
   geom_line()+
   geom_hline(yintercept=1/3000, color="gray")+
   labs(title="Lachnospiraceae Unclassified") +
   theme_classic()
-##  ggsave("results/figures/XXXgenera_time.png")
 
 ruminoc_genus_time <- agg_genus_data %>% 
   filter(genus == "Ruminococcus") %>% 
@@ -450,6 +473,7 @@ ruminoc_genus_time <- agg_genus_data %>%
 ##  filter(Group == "PPI") %>%
   ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
   scale_colour_manual(values=color_scheme) +
+  scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
   geom_point()+
   geom_line()+
   geom_hline(yintercept=1/3000, color="gray")+
@@ -462,6 +486,7 @@ enteroc_genus_time <- agg_genus_data %>%
 ##  filter(Group == "PPI") %>%
   ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
   scale_colour_manual(values=color_scheme) +
+  scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
   geom_point()+
   geom_line()+
   geom_line(position=position_dodge(width=0.2))+ #Show lines from all groups
@@ -475,6 +500,7 @@ strep_genus_time <- agg_genus_data %>%
   filter(Group == "PPI") %>%
   ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
   scale_colour_manual(values=color_ppi) +
+  scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
   geom_point()+
   geom_line()+
   geom_hline(yintercept=1/3000, color="gray")+
@@ -488,32 +514,48 @@ enteroc_family_time <- agg_family_data %>%
   filter(Group == "PPI") %>%
   ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
   scale_colour_manual(values=color_ppi) +
+  scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
   geom_point()+
   geom_line()+
   geom_hline(yintercept=1/3000, color="gray")+
   theme_classic()
 
-#Lactobacillaceae family relative abundance over time
-lacto_family_time <- agg_family_data %>% 
+#Lactobacillaceae family relative abundance over time with mean relative abundance summary line and individual mouse relative abundance points
+#Data frame for mean Lactobacillaceae family relative abundance for each group on each day
+lacto_family_mean <- agg_family_data %>% 
+  filter(family == "Lactobacillaceae") %>% 
+  group_by(Group, day) %>% 
+  summarize(mean=(mean(agg_rel_abund + 1/6000))) %>% 
+  ungroup
+# Data frame for individual mouse relative abundance points
+lacto_family_mice <-  agg_family_data %>% 
   filter(family == "Lactobacillaceae") %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
-  select(Group, day, agg_rel_abund, family) %>% 
-  ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
+  select(Group, day, agg_rel_abund, family)
+# Figure S1A----
+#Plot of Lactobacillaceae family relative abundance over time with mean relative abundance summary line and individual mouse relative abundance points
+lacto_family_time <- ggplot(NULL)+
+  geom_point(lacto_family_mice, mapping = aes(x=day, y=agg_rel_abund, color=Group, alpha = .2), show.legend = FALSE)+
+  geom_line(lacto_family_mean, mapping = aes(x=day, y=mean, color=Group))+
   scale_colour_manual(values=color_scheme) +
-  geom_point()+
-  geom_line()+
   geom_hline(yintercept=1/3000, color="gray")+
-  labs(title="Lactobacillaceae") +
+  labs(title="Lactobacillaceae",
+       x="Day",
+       y="Relative abundance (%)") +
+  scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
   theme_classic()+
-  ggsave("results/figures/lactobacillaceae_time.png")
+  theme(plot.title=element_text(hjust=0.5))+
+  theme(legend.title=element_blank(), legend.position = c(0.12, 0.27))+
+  save_plot("results/figures/lactobacillaceae_time.png", lacto_family_time, base_aspect_ratio = 2.4)
 
-mi_family_time <- agg_family_data %>% 
+ mi_family_time <- agg_family_data %>% 
   filter(family == "Micrococcaceae") %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
   select(Group, day, agg_rel_abund, family) %>% 
   filter(Group == "PPI") %>%
   ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
   scale_colour_manual(values=color_ppi) +
+  scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
   geom_point()+
   geom_line()+
   geom_hline(yintercept=1/3000, color="gray")+
@@ -526,6 +568,7 @@ staph_family_time <- agg_family_data %>%
   filter(Group == "PPI") %>%
   ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
   scale_colour_manual(values=color_ppi) +
+  scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
   geom_point()+
   geom_line()+
   geom_hline(yintercept=1/3000, color="gray")+
@@ -538,32 +581,47 @@ strep_family_time <- agg_family_data %>%
   filter(Group == "PPI") %>%
   ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
   scale_colour_manual(values=color_ppi) +
+  scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
   geom_point()+
   geom_line()+
   geom_hline(yintercept=1/3000, color="gray")+
   theme_classic()
 
-#Ruminococcaceae family over time
-r_family_time <- agg_family_data %>% 
+#Ruminococcaceae family relative abundance over time with mean relative abundance summary line and individual mouse relative abundance points
+#Data frame for mean Ruminococcaceae family relative abundance for each group on each day
+rumino_family_mean <- agg_family_data %>% 
+  filter(family == "Ruminococcaceae") %>% 
+  group_by(Group, day) %>% 
+  summarize(mean=(mean(agg_rel_abund + 1/6000))) %>% 
+  ungroup
+# Data frame for individual mouse relative abundance points
+rumino_family_mice <-  agg_family_data %>% 
   filter(family == "Ruminococcaceae") %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
-  select(Group, day, agg_rel_abund, family) %>% 
-  ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
+  select(Group, day, agg_rel_abund, family)
+# Figure S1B----
+#Plot of Ruminococcaceae family relative abundance over time with mean relative abundance summary line and individual mouse relative abundance points
+rumino_family_time <- ggplot(NULL)+
+  geom_point(rumino_family_mice, mapping = aes(x=day, y=agg_rel_abund, color=Group, alpha = .2), show.legend = FALSE)+
+  geom_line(rumino_family_mean, mapping = aes(x=day, y=mean, color=Group))+
   scale_colour_manual(values=color_scheme) +
-  geom_point()+
-  geom_line()+
   geom_hline(yintercept=1/3000, color="gray")+
-  labs(title="Ruminococcaceae") +
+  labs(title="Ruminococcaceae",
+       x="Day",
+       y="Relative abundance (%)") +
+  scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
   theme_classic()+
-  ggsave("results/figures/ruminococcaceae_time.png")
+  theme(plot.title=element_text(hjust=0.5))+
+  theme(legend.title=element_blank(), legend.position = c(0.9, 0.2))+
+  save_plot("results/figures/ruminococcaceae_time.png", rumino_family_time, base_aspect_ratio = 2.4)
 
-agg_family_data %>% 
-l_family_time <- filter(family == "Lachnospiraceae") %>% 
+l_family_time <- agg_family_data %>% filter(family == "Lachnospiraceae") %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
   select(Group, day, agg_rel_abund, family) %>% 
   filter(Group == "PPI") %>%
   ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
   scale_colour_manual(values=color_ppi) +
+  scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
   geom_point()+
   geom_line()+
   geom_hline(yintercept=1/3000, color="gray")+
