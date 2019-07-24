@@ -117,29 +117,46 @@ ppi_day_sobs_aov <- aov(sobs~day, data = ppi_day_alpha)
 summary(ppi_day_sobs_aov)
 #Since P = 0.0603, do not do Tukeys honest significance difference test to determine which comparisons between group are significant.
 
+# Data frame so we can show what Shannon diversity & richness look like over 3 timepoints for all 3 groups
+groups_day_alpha <- meta_alpha %>% 
+  filter(day == -7 | day == 0 | day ==9) %>% # select -7, 0, and -9 timepoints (beginning, middle and end of the experiment)
+  mutate(day = as.factor(day))# turn day into factor
+
+# Figure S2A----
 #Boxplots of Shannon diversity for timepoints being compared within PPI group:
-c <- ppi_day_alpha %>% 
+c <- groups_day_alpha %>% 
   ggplot(aes(x= day, y=shannon, colour=Group)) +
-  scale_colour_manual(values=color_ppi) +
-  geom_boxplot(outlier.shape = NA, show.legend = FALSE)+
-  geom_jitter(shape=19, size=1, alpha=0.7, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.1), show.legend = FALSE) +
+  scale_colour_manual(name=NULL, 
+                      values=color_scheme, 
+                      breaks=c("Clindamycin", "Clindamycin + PPI", "PPI"),
+                      labels=c("Clindamycin", "Clindamycin + PPI", "PPI")) +
+  geom_boxplot(outlier.shape = NA)+
+  geom_jitter(shape=19, size=1, alpha=0.4, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.1), show.legend = FALSE) +
   labs(title=NULL, 
-       x=NULL,
+       x="Day",
        y="Shannon")+
   ylim(0, 3.5)+
-  theme_classic()
+  theme_classic()+
+  theme(legend.position = c(0.9, 0.2))
+save_plot("results/figures/groups_shannon.png", c) #Use save_plot instead of ggsave because it works better with cowplot
 
+# Figure S2B----
 #Boxplots of sobs (richness) for timepoints being compared within PPI group:
-f <- ppi_day_alpha %>% 
+f <- groups_day_alpha %>% 
   ggplot(aes(x= day, y=sobs, colour=Group)) +
-  scale_colour_manual(values=color_ppi) +
-  geom_boxplot(outlier.shape = NA, show.legend = FALSE)+
-  geom_jitter(shape=19, size=1, alpha=0.7, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.1), show.legend = FALSE) +
+  scale_colour_manual(name=NULL, 
+                      values=color_scheme, 
+                      breaks=c("Clindamycin", "Clindamycin + PPI", "PPI"),
+                      labels=c("Clindamycin", "Clindamycin + PPI", "PPI")) +
+  geom_boxplot(outlier.shape = NA)+
+  geom_jitter(shape=19, size=1, alpha=0.4, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.1), show.legend = FALSE) +
   labs(title=NULL, 
-       x=NULL,
+       x="Day",
        y="richness")+
   ylim(0, 100)+
-  theme_classic()
+  theme_classic()+
+  theme(legend.position = c(0.9, 0.2))
+save_plot("results/figures/groups_richness.png", f) #Use save_plot instead of ggsave because it works better with cowplot
 
 shannon_sobs <- plot_grid(a, b, c, d, e, f, labels = "AUTO") +
   ggsave("results/figures/shannon_sobs.pdf", width=11, height=6)
