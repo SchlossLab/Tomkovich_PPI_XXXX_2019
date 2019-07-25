@@ -41,9 +41,9 @@ shapiro.test(meta_alpha$shannon) # Test for Shannon diversity
 
 #Hypothesis testing between groups, all timepoints. Since data is not normally distributed use the Kruskal-Wallis test
 group_shannon_kruskal <- kruskal.test(shannon~Group, data=meta_alpha)
-# P = 6.29e-06, so do post hoc test to determin which comparisons are significant
+# P = 1.132e-05, so do post hoc test to determine which comparisons are significant
 pairwise.wilcox.test(g=meta_alpha[["Group"]], x=meta_alpha[["shannon"]], p.adjust.method="BH")
-## PPI vs clindamycin and PPI vs clindamycin+PPI are significantly different (P = 2.3e-05 and P = 2.3e-05)
+## PPI vs clindamycin and PPI vs clindamycin+PPI are significantly different (P = 4.5e-05 and P = 4.5e-05)
 
 # Boxplots of sobs (measure of community richness) across treatment groups
 d <- meta_alpha %>% 
@@ -60,14 +60,13 @@ d <- meta_alpha %>%
 
 # Test if sobs (richness) is normally distributed
 shapiro.test(meta_alpha$sobs) 
-# P > 0.05 means the data are normally distrubuted and we can do a parametric anova test.
+# P < 0.05 means the data are not normally distrubuted and we should do a non parametric test (Kruskal-Wallis)
 
-#Hypothesis testing between groups, all timepoints analysis of variance (ANOVA)
-group_sobs_aov <- aov(sobs~Group, data = meta_alpha)
-summary(group_sobs_aov)
-#Since P = 5.72e-05, do Tukey's honest significance difference test to determine which comparisons between group are significant.
-TukeyHSD(group_sobs_aov)
-# PPI vs clindamycin and PPI vs clindamycin+PPI are significantly different (P = 0.003 and P = 0.0000647)
+#Hypothesis testing between groups, all timepoints Kruskal-Wallis test.
+group_sobs_kruskal <- kruskal.test(sobs~Group, data=meta_alpha)
+#Since P = 0.000118, do Tukey's honest significance difference test to determine which comparisons between group are significant.
+pairwise.wilcox.test(g=meta_alpha[["Group"]], x=meta_alpha[["sobs"]], p.adjust.method="BH")
+# PPI vs clindamycin and PPI vs clindamycin+PPI are significantly different (P = 0.0025 and P = 9.1e-05)
 
 # Linegraph of shannnon index across time within the PPI group
 b <- meta_alpha %>% 
@@ -100,22 +99,22 @@ ppi_day_alpha <- meta_alpha %>%
   mutate(day = as.factor(day))# turn day into factor so we can do post hoc comparisons
 
 # Test if PPI Shannon data are normally distributed using Shapiro-Wilk normality test
-shapiro.test(ppi_time_alpha$shannon) # Test for Shannon diversity
-shapiro.test(ppi_time_alpha$sobs)
+shapiro.test(ppi_day_alpha$shannon) # Test for Shannon diversity
+shapiro.test(ppi_day_alpha$sobs)
 # P > 0.05, means the data are normally distributed and we should do parametric test (aov/ANOVA)
 
 #Hypothesis testing between groups, all timepoints analysis of variance (ANOVA)
 #shannon
 ppi_day_shannon_aov <- aov(shannon~day, data = ppi_day_alpha) 
 summary(ppi_day_shannon_aov)
-#Since P = 0.0436, do Tukey's honest significance difference test to determine which comparisons between group are significant.
+#Since P = 0.0467, do Tukey's honest significance difference test to determine which comparisons between group are significant.
 TukeyHSD(ppi_day_shannon_aov)
 #No comparison's significant after adjusting p values. Closest was 9 to -7.
 
 #richness
 ppi_day_sobs_aov <- aov(sobs~day, data = ppi_day_alpha) 
 summary(ppi_day_sobs_aov)
-#Since P = 0.0603, do not do Tukeys honest significance difference test to determine which comparisons between group are significant.
+#Since P = 0.265, do not do Tukeys honest significance difference test to determine which comparisons between group are significant.
 
 # Data frame so we can show what Shannon diversity & richness look like over 3 timepoints for all 3 groups
 groups_day_alpha <- meta_alpha %>% 
