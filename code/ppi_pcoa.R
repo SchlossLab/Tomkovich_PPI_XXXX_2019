@@ -142,7 +142,7 @@ save_plot("results/figures/before_C._diff_challenge.png", pcoa_before_challenge,
 shape_legend <-c(expression(paste(italic("C. difficile"), "\nstatus"))) #Expression variable for the title so that bacteria name will be in italics
 # plot after abx & C. diff. Colonized mice are represented by x shapes. Resistant mice are represented as circles.
 pcoa_after_challenge <- pcoa %>% 
-  filter(day > 1) %>% 
+  filter(day > 0) %>% 
   ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day, shape = c.diff_colonized)) +
   scale_colour_manual(name=NULL, 
                        values=color_scheme, 
@@ -152,7 +152,9 @@ pcoa_after_challenge <- pcoa %>%
                      values=c(4, 19),
                      breaks=c("colonized", "resistant"),
                      labels=c("colonized", "resistant")) +
-  scale_alpha_continuous(range = c(.3, 1))+
+  scale_alpha_continuous(range = c(.3, 1),
+                         breaks=c(1, 3, 6, 9),
+                         labels=c(1, 3, 6, 9))+
   labs(alpha = "Day")+
   geom_point() +
   theme_classic() +
