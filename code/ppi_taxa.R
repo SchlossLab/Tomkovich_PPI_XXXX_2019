@@ -179,139 +179,188 @@ agg_genus_data %>%
   theme_classic()
 
 #Hypothesis testing----
-#Kruskal_wallis test for phylum differences across treatment groups with Benjamini-Hochburg correction 
-phylum_tests <- agg_phylum_data %>% 
+#Kruskal_wallis test for phylum differences across treatment groups with Benjamini-Hochburg correction on Day -7 & Day 0 of the experiment
+#Day -7 (Start day of the experiment)
+phylum_tests_start_day <- agg_phylum_data %>% 
+  filter(day == -7) %>% 
   group_by(phylum) %>% 
   do(tidy(kruskal.test(agg_rel_abund~factor(Group), data=.))) %>% ungroup() %>% 
   mutate(p.value.adj=p.adjust(p.value, method="BH")) %>% 
   arrange(p.value.adj)
 
-#List the significant phyla based on treatment groups after Benjamini-Hochburg correction
-sig_phyla <- phylum_tests %>% 
+phylum_tests_day0 <- agg_phylum_data %>% 
+  filter(day == 0) %>% 
+  group_by(phylum) %>% 
+  do(tidy(kruskal.test(agg_rel_abund~factor(Group), data=.))) %>% ungroup() %>% 
+  mutate(p.value.adj=p.adjust(p.value, method="BH")) %>% 
+  arrange(p.value.adj)
+
+#List the significant phyla based on treatment groups after Benjamini-Hochburg correction on Day -7 & Day 0 of the experiment
+sig_phyla_start_day <- phylum_tests_start_day %>% 
   filter(p.value.adj <= 0.05) %>% 
   pull(phylum)
 
-#Pairwise wilcox test to determine which comparisons are significantly different
-wilcox_phylum_tests <- agg_phylum_data %>% 
-  group_by(phylum) %>% 
-  filter(phylum %in% sig_phyla) %>% 
-  select(phylum, Group, agg_rel_abund) 
-wilcox_phylum_tests <- wilcox_phylum_tests %>% 
-  do(tidy(pairwise.wilcox.test(g=wilcox_phylum_tests[["Group"]], x=wilcox_phylum_tests[["agg_rel_abund"]], p.adjust.method = "BH")))
-# Warning messages: cannot compute exact p value with ties
+sig_phyla_day_0 <- phylum_tests_day0 %>% 
+  filter(p.value.adj <= 0.05) %>% 
+  pull(phylum)
+# No significant phylum differences across treatment groups on day -7 & day 0 of the experiment after FDR correction.
 
-#Graph the significant phyla based on treatment groups after Benjamini-Hochburg correction
-group_phyla <- agg_phylum_data %>% 
-  filter(phylum %in% sig_phyla) %>% 
-  mutate(phylum=factor(phylum, levels=sig_phyla)) %>% 
-  mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
-  ggplot(aes(x= reorder(phylum, agg_rel_abund), y=agg_rel_abund, color=Group))+
-  scale_colour_manual(values=color_scheme) +
-  geom_hline(yintercept=1/3000, color="gray")+
-  geom_boxplot(outlier.shape = NA)+
-  geom_jitter(shape=19, size=1, alpha=0.4, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2)) +
-  labs(title="Phyla significantly associated with treatment group", 
-       x=NULL,
-       y="Relative abundance (%)")+
-  scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
-  theme_classic()
+#Kruskal_wallis test for family differences across treatment groups with Benjamini-Hochburg correction Day -7, 0, 2, & 9 of the experiment
+family_tests_start_day <- agg_family_data %>% 
+  filter(day == -7) %>%
+  group_by(family) %>% 
+  do(tidy(kruskal.test(agg_rel_abund~factor(Group), data=.))) %>% ungroup() %>% 
+  mutate(p.value.adj=p.adjust(p.value, method="BH")) %>% 
+  arrange(p.value.adj)
 
-#Kruskal_wallis test for family differences across treatment groups with Benjamini-Hochburg correction 
-family_tests <- agg_family_data %>% 
+family_tests_day0 <- agg_family_data %>% 
+  filter(day == 0) %>%
+  group_by(family) %>% 
+  do(tidy(kruskal.test(agg_rel_abund~factor(Group), data=.))) %>% ungroup() %>% 
+  mutate(p.value.adj=p.adjust(p.value, method="BH")) %>% 
+  arrange(p.value.adj)
+
+family_tests_day2 <- agg_family_data %>% 
+  filter(day == 2) %>%
+  group_by(family) %>% 
+  do(tidy(kruskal.test(agg_rel_abund~factor(Group), data=.))) %>% ungroup() %>% 
+  mutate(p.value.adj=p.adjust(p.value, method="BH")) %>% 
+  arrange(p.value.adj)
+
+family_tests_day9 <- agg_family_data %>% 
+  filter(day == 9) %>%
   group_by(family) %>% 
   do(tidy(kruskal.test(agg_rel_abund~factor(Group), data=.))) %>% ungroup() %>% 
   mutate(p.value.adj=p.adjust(p.value, method="BH")) %>% 
   arrange(p.value.adj)
 
 #List the significant family based on treatment groups after Benjamini-Hochburg correction
-sig_family <- family_tests %>% 
+sig_family_start_day <- family_tests_start_day %>% 
   filter(p.value.adj <= 0.05) %>% 
   pull(family)
 
-#Pairwise wilcox test to determine which comparisons are significantly different
-wilcox_family_tests <- agg_family_data %>% 
-  group_by(family) %>% 
-  filter(family %in% sig_family) %>% 
-  select(family, Group, agg_rel_abund) 
-wilcox_family_tests <- wilcox_family_tests %>% 
-  do(tidy(pairwise.wilcox.test(g=wilcox_family_tests[["Group"]], x=wilcox_family_tests[["agg_rel_abund"]], p.adjust.method = "BH")))
+sig_family_day0 <- family_tests_day0 %>% 
+  filter(p.value.adj <= 0.05) %>% 
+  pull(family)
 
-#Figure 2D----
-#Graph the significant family based on treatment groups after Benjamini-Hochburg correction
-group_family <- agg_family_data %>% 
-  filter(family %in% sig_family) %>% 
-  mutate(family=factor(family, levels=sig_family)) %>% 
-  mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
-  ggplot(aes(x= reorder(family, agg_rel_abund), y=agg_rel_abund, color=Group, alpha = day))+
-  scale_colour_manual(values=color_scheme) +
-  geom_hline(yintercept=1/3000, color="gray")+
-  geom_boxplot(outlier.shape = NA)+
-  geom_jitter(shape=19, size=1, alpha=0.4, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2)) +
-  labs(title="Families significantly associated with treatment group", 
-       x=NULL,
-       y="Relative abundance (%)")+
-  scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
-  coord_flip()+
-  theme_classic()+
-  theme(plot.title=element_text(hjust=.5))+
-  theme(legend.title=element_blank(), legend.position = c(0.85, 0.15)) #Get rid of legend title & move legend position
-save_plot("results/figures/family_assoc_w_treatment.png", group_family, base_aspect_ratio = 2) #Use save_plot instead of ggsave because it's more compatible with cowplot
+sig_family_day2 <- family_tests_day2 %>% 
+  filter(p.value.adj <= 0.05) %>% 
+  pull(family)
+
+sig_family_day9 <- family_tests_day9 %>% 
+  filter(p.value.adj <= 0.05) %>% 
+  pull(family)
+
+# No families are significantly different on day -7, 0, 2, & 9 after FDR correction
 
 # Figure 1C----
 #Graph the families associated with human PPI use according to the literature [@Imhann2017]
 ppi_family <- c("Enterococcaceae", "Lactobacillaceae", "Micrococcaceae", "Staphylococcaceae", "Streptococcaceae", "Ruminococcaceae")
-ppi_family_plot <- agg_family_data %>% 
+ppi_family_plot_neg7 <- agg_family_data %>% 
   filter(family %in% ppi_family) %>% 
+  filter(day == -7) %>% 
   mutate(family=factor(family, levels=ppi_family)) %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
-  ggplot(aes(x= reorder(family, agg_rel_abund), y=agg_rel_abund, color=Group, alpha = day))+
+  ggplot(aes(x= reorder(family, agg_rel_abund), y=agg_rel_abund, color=Group))+
   scale_colour_manual(values=color_scheme) +
   geom_hline(yintercept=1/3000, color="gray")+
   geom_boxplot(outlier.shape = NA)+
   geom_jitter(shape=19, size=1, alpha=0.4, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2)) +
-  labs(title="Families previously associated with human PPI use", 
+  labs(title=NULL, 
        x=NULL,
-       y="Relative abundance (%)")+
-  scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
+       y="Relative abundance (%)",
+       color = "Day -7")+
+  scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100), limits = c(1e-4, 1))+
   coord_flip()+
   theme_classic()+
   theme(plot.title=element_text(hjust=0.5))+
   theme(plot.title=element_text(hjust=0.5))+
-  theme(legend.title=element_blank(), legend.position = c(0.9, 0.15)) #Ger rid of legend title & move legend position
-save_plot("results/figures/families_prev_assoc_w_PPIs.png", ppi_family_plot, base_aspect_ratio = 2)
+  theme(legend.position = c(0.9, 0.2)) #Move legend position
+save_plot("results/figures/families_prev_assoc_w_PPIs_-7.png", ppi_family_plot_neg7, base_aspect_ratio = 2)
+
+# Figure 1D----
+ppi_family_plot_day0 <- agg_family_data %>% 
+  filter(family %in% ppi_family) %>% 
+  filter(day == 0) %>% 
+  mutate(family=factor(family, levels=ppi_family)) %>% 
+  mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
+  ggplot(aes(x= reorder(family, agg_rel_abund), y=agg_rel_abund, color=Group))+
+  scale_colour_manual(values=color_scheme) +
+  geom_hline(yintercept=1/3000, color="gray")+
+  geom_boxplot(outlier.shape = NA)+
+  geom_jitter(shape=19, size=1, alpha=0.4, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2)) +
+  labs(title=NULL, 
+       x=NULL,
+       y="Relative abundance (%)",
+       color = "Day 0")+
+  scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100), limits = c(1e-4, 1))+
+  coord_flip()+
+  theme_classic()+
+  theme(plot.title=element_text(hjust=0.5))+
+  theme(plot.title=element_text(hjust=0.5))+
+  theme(legend.position = c(0.9, 0.2)) #Move legend position
+save_plot("results/figures/families_prev_assoc_w_PPIs_0.png", ppi_family_plot_day0, base_aspect_ratio = 2)
+
+# FDR corrected P values for these families analyzed at day -7 & day 0
+ppi_fdr_family_start_day <- family_tests_start_day %>% 
+  filter(family %in% ppi_family) %>% 
+  select(family, p.value.adj)
+# all >.5 and Enterococcaceae is NaN (Not a number)
+ppi_fdr_family_day0 <- family_tests_day0 %>% 
+  filter(family %in% ppi_family) %>% 
+  select(family, p.value.adj)
+# all >.2 and Staphylococcaceae, Streptococcaceae, and Enterococcaceae is NaN (Not a number)
 
 #Kruskal_wallis test for genus differences across treatment groups with Benjamini-Hochburg correction 
-genus_tests <- agg_genus_data %>% 
+genus_tests_day0 <- agg_genus_data %>% 
+  filter(day == 0) %>% 
   group_by(genus) %>% 
   do(tidy(kruskal.test(agg_rel_abund~factor(Group), data=.))) %>% ungroup() %>% 
   mutate(p.value.adj=p.adjust(p.value, method="BH")) %>% 
   arrange(p.value.adj)
 
+genus_tests_day2 <- agg_genus_data %>% 
+  group_by(genus) %>% 
+  filter(day == 2) %>% 
+  do(tidy(kruskal.test(agg_rel_abund~factor(Group), data=.))) %>% ungroup() %>% 
+  mutate(p.value.adj=p.adjust(p.value, method="BH")) %>% 
+  arrange(p.value.adj)
+
+genus_tests_day9 <- agg_genus_data %>% 
+  group_by(genus) %>% 
+  filter(day == 9) %>% 
+  do(tidy(kruskal.test(agg_rel_abund~factor(Group), data=.))) %>% ungroup() %>% 
+  mutate(p.value.adj=p.adjust(p.value, method="BH")) %>% 
+  arrange(p.value.adj)
+
 #List the significant genera based on treatment groups after Benjamini-Hochburg correction
-sig_genus <- genus_tests %>% 
+sig_genus_day0 <- genus_tests_day0 %>% 
   filter(p.value.adj <= 0.05) %>% 
   pull(genus)
+sig_genus_day2 <- genus_tests_day2 %>% 
+  filter(p.value.adj <= 0.05) %>% 
+  pull(genus)
+sig_genus_day9 <- genus_tests_day9 %>% 
+  filter(p.value.adj <= 0.05) %>% 
+  pull(genus)
+#No genera are significantly different accross treatment groups on day 0, 2, and 8
 
-#Pairwise wilcox test to determine which comparisons are significantly different
-wilcox_genus_tests <- agg_genus_data %>% 
-  group_by(genus) %>% 
-  filter(genus %in% sig_genus) %>% 
-  select(genus, Group, agg_rel_abund) 
-wilcox_genus_tests <- wilcox_genus_tests %>%
-  do(tidy(pairwise.wilcox.test(g=wilcox_genus_tests[["Group"]], x=wilcox_genus_tests[["agg_rel_abund"]], p.adjust.method = "BH")))
+top_6_genera_across_groups <- top_n(genus_tests_day2, -6, p.value.adj) %>%  #negative to pull rows with the lowest values
+  pull(genus)
 
-# Figure 2C----
-#Graph the significant genera based on treatment groups after Benjamini-Hochburg correction
+#Graph the top 6 genera based on treatment groups, no genera are significant after Benjamini-Hochburg correction
 group_genera <- agg_genus_data %>% 
-  filter(genus %in% sig_genus) %>% 
-  mutate(genus=factor(genus, levels=sig_genus)) %>% 
+  filter(genus %in% top_6_genera_across_groups) %>% 
+  filter(day == 2) %>% 
+  mutate(genus=factor(genus, top_6_genera_across_groups)) %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
   ggplot(aes(x= reorder(genus, agg_rel_abund), y=agg_rel_abund, color=Group))+
-  scale_colour_manual(values=color_scheme) +
+  scale_colour_manual(name="Day 2",
+                      values=color_scheme) +
   geom_hline(yintercept=1/3000, color="gray")+
   geom_boxplot(outlier.shape = NA)+
   geom_jitter(shape=19, size=1, alpha=0.4, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2)) +
-  labs(title="Genera significantly associated with treatment group", 
+  labs(title=NULL, 
        x=NULL,
        y="Relative abundance (%)")+
   scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
@@ -319,7 +368,7 @@ group_genera <- agg_genus_data %>%
   theme_classic()+
   theme(axis.text.y = element_text(face = "italic"))+ #Have the genera show up as italics
   theme(plot.title=element_text(hjust=0.5))+
-  theme(legend.title=element_blank(), legend.position = c(0.85, 0.2)) #Ger rid of legend title & move legend position
+  theme(legend.position = c(0.85, 0.2)) #Ger rid of legend title & move legend position
 save_plot("results/figures/genera_assoc_w_treatment.png", group_genera, base_aspect_ratio = 2)
    
 #Kruskal_wallis test with Benjamini-Hochburg correction for phylum differences across time in the PPI treatment group 
@@ -370,7 +419,6 @@ ppi_sig_family <- ppi_family_tests %>%
 top_7_ppi <- top_n(ppi_family_tests, -7, p.value.adj) %>%  #negative to pull rows with the lowest values
   pull(family)
 
-# Figure 1D----
 #Graph the 7 families with the lowest Benjamini-Hochburg corrected P-values across time in the PPI group
 ppi_family_time <- agg_family_data %>% 
   filter(family %in% top_7_ppi) %>% 
@@ -412,7 +460,6 @@ ppi_sig_genus <- ppi_genus_tests %>%
 top_13_ppi <- top_n(ppi_genus_tests, -13, p.value.adj) %>%  #negative to pull rows with the lowest values
   pull(genus)
 
-#Figure S1C----
 #Graph the 13 genera with the lowest Benjamini-Hochburg corrected P-values across time in the PPI group
 ppi_genus_time <- agg_genus_data %>% 
   filter(genus %in% top_13_ppi) %>% 

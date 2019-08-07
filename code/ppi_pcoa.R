@@ -16,8 +16,9 @@ library(tidyverse)
 library(cowplot)
 
 metadata <- read.table('data/process/ppi_metadata.txt', header = T, sep = '\t', stringsAsFactors = F) %>% 
-  mutate(abx_status = if_else(day > -8 & day < 0, "pre", "post")) %>% # Create a column to differentiate between timepoints that are from before or after exposure to the antibiotic clindamycin
-  mutate(c.diff_colonized = if_else(D9.C..difficile.CFU.g > 0, "colonized", "resistant")) # Create a column to differentiate mice that were colonized with C. difficile from mice that were resistant. Based off of D9 (2 day post challenge) CFU counts.
+  mutate(c.diff_colonized = if_else(D9.C..difficile.CFU.g > 0, "colonized", "resistant")) %>% # Create a column to differentiate mice that were colonized with C. difficile from mice that were resistant. Based off of D9 (2 day post challenge) CFU counts.
+  mutate(Mouse.ID = as.factor(Mouse.ID)) # Make sure mouse.ID is treated as a factor to use a discrete color scale.
+
 
 # read in pcoa data
 pcoa <- read_tsv('data/mothur/ppi.opti_mcc.braycurtis.0.03.lt.ave.pcoa.axes') %>%
@@ -31,6 +32,7 @@ color_scheme <- c("#d95f02", "#1b9e77", "#7570b3")
 color_ppi <-  c("#7570b3") # Use for graphs looking at just the PPI group over time
 color_cppi <- c("#1b9e77") # Use for graphs looking at just the Clindamycin + PPI group over time
 color_c <- c("#d95f02") # Use for graphs looking at just the Clindamycin group over time
+color_mouse <- c("#dadaeb", "#bcbddc", "#9e9ac8", "#756bb1", "#54278f") # To differentiate between 5 individual mice
 
 #plot all samples
 pcoa %>%  
@@ -120,22 +122,18 @@ before_plus_day_after_abx <- pcoa %>%	filter(day < 1) %>%
 # plot 1st 7 days: Includes abx treatment day. Pre-clindamycin treatment represented by circles.
 # Post-clindamycin treatment represented by open diamonds.
 pcoa_before_challenge <- pcoa %>% 
-  filter(day < 1) %>%	
-  ggplot(aes(x=axis1, y=axis2, color=Group, alpha = day, shape = abx_status)) +
-  scale_colour_manual(name=NULL, 
-                      values=color_scheme, 
-                      breaks=c("Clindamycin", "Clindamycin + PPI", "PPI"),
-                      labels=c("Clindamycin", "Clindamycin + PPI", "PPI")) +
-  scale_shape_manual(name="Antibiotic\nTreatment",
-                     values=c(5, 19),
-                     breaks=c("pre", "post"),
-                     labels=c("Pre-", "Post-")) +
-  scale_alpha_continuous(range = c(.3, 1))+
-  labs(alpha = "Day")+
+  filter(day < 1, Group == "PPI", Mouse.ID == as.factor(Mouse.ID)) %>%	
+  ggplot(aes(x=axis1, y=axis2, color=Mouse.ID)) +
+  scale_colour_manual(name="PPI Mice", values=color_mouse) + 
   geom_point() +
+  geom_path() +
   theme_classic()+
-  labs(title="PCoA of fecal samples taken from timepoints before spore challenge") +
-  theme(plot.title = element_text(hjust = 0.5))
+  xlim(-0.4, 0.3)+
+  ylim(-0.65, 0.3)+
+  labs(x = "PCoA 1",
+       y = "PCoA 2") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(legend.position = c(0.15, 0.8)) #Move legend position
 save_plot("results/figures/before_C._diff_challenge.png", pcoa_before_challenge, base_aspect_ratio = 2) #Use save_plot over ggsave because it works better with cowplot
 
 # Figure 2B----
@@ -158,7 +156,10 @@ pcoa_after_challenge <- pcoa %>%
   labs(alpha = "Day")+
   geom_point() +
   theme_classic() +
-  labs(title="PCoA of fecal samples from timepoints after spore challenge") +
+  xlim(-0.4, 0.3)+
+  ylim(-0.65, 0.3)+
+  labs(x = "PCoA 1",
+       y = "PCoA 2") +
   theme(plot.title = element_text(hjust = 0.5))
 save_plot("results/figures/after_abx_C.diff.png", pcoa_after_challenge, base_aspect_ratio = 2)
 

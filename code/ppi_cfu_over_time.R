@@ -1,6 +1,5 @@
 #Load packages
 library(tidyverse)
-library(vegan)
 library(cowplot)
 
 # Define color palette:
@@ -53,6 +52,5 @@ cfu_time <- ggplot(NULL) +
   scale_y_log10(labels=fancy_scientific, breaks = c(10, 100, 10^3, 10^4, 10^5, 10^6, 10^7, 10^8, 10^9))+
   theme_classic()+
   theme(legend.position = c(.9, .8)) +
-  labs(title=title) +
-  theme(plot.title=element_text(hjust=0.5))
+  theme(legend.title=element_blank(), plot.title=element_text(hjust=0.5))
 save_plot("results/figures/ppi_cfu.png", cfu_time, base_aspect_ratio = 2)
