@@ -124,42 +124,22 @@ before_plus_day_after_abx <- pcoa %>%	filter(day < 1) %>%
   ggsave("results/figures/before_plus_day_after_abx.png")
 
 # Figure 1B----
-# plot 1st 7 days: Includes abx treatment day. Pull just these samples from the distance matrix: data/mothur/ppi.opti_mcc.braycurtis.0.03.lt.ave.dist and then analyze that file with
-# mothur
-# Function for reading distance matrix into R. Source: https://forum.mothur.org/t/importing-dist-matrix-into-r/1266/6
-parseDistanceDF = function(phylip_file) {
-  
-  # Read the first line of the phylip file to find out how many sequences/samples it contains
-  temp_connection = file(phylip_file, 'r')
-  len = readLines(temp_connection, n=1)
-  len = as.numeric(len)
-  len = len +1
-  close(temp_connection)
-  
-  
-  phylip_data = read.table(phylip_file, fill=T, row.names=1, skip=1, col.names=1:len)
-  colnames(phylip_data) <- row.names(phylip_data)
-  return(phylip_data)
-}
-#Read in PPI distance matrix using parseDistanceMatrix function
-distance_matrix <- parseDistanceDF('data/mothur/ppi.opti_mcc.braycurtis.0.03.lt.ave.dist')
-#Get a list of the shared_names from metadata file that 
+# plot 1st 7 days: Includes abx treatment day. 
+#Get a list of the shared_names from metadata file that are just the omeprazole treated mice before antibiotic treatment
 ppi_before_challenge_subset <- metadata %>% 
   filter(day < 1, Group == "Omeprazole") %>% 
   pull(shared_names)
-#groups specification for running dist.shared & pcoa commands on just this subset of samples in mothur"
+#groups specification for running dist.shared & pcoa commands on just this subset of samples in mothur". See README for instructions on analysis using mothur commands.
 # Opos+M1+D0-Opos+M2+D0-Opos+M3+D0-Opos+M4+D0-Opos+M5+D0-Opos+M1+D2-Opos+M2+D2-Opos+M3+D2-Opos+M4+D2-Cpos+M5+D-Opos+M1+D4-Opos+M3+D4-Opos+M4+D4-Opos+M5+D4-Opos+M11+D6-Opos+M2+D6-Opos+M3+D-Opos+M4+D6-Opos+M5+D6-Opos+M1+D7-Opos+M2+D7-Opos+M3+D7-Opos+M4+D7-Opos+M5+D7
+#Subsetted distance matrices and pcoa files outputted by mothur are located in data/mothur/subset
 
-column_subset <- distance_matrix[, names(distance_matrix) %in% ppi_before_challenge_subset] #Selects just the columns in the ppi_before_challenge_subset
-subset_distance_matrix <- filter(column_subset, rownames(column_subset) %in% ppi_before_challenge_subset) #Selects just the rows in the ppi_before_challenge_subset
-write.table(subset_distance_matrix, file = "data/mothur/ppi_subset.opti_mcc.braycurtis.0.03.lt.ave.dist", row.names = TRUE)
 # Read in PCoA file for subset of PPI samples taken before C. difficile challenge & merge to metadata
 pcoa_subset <- read_tsv('data/mothur/subset/ppi.opti_mcc.braycurtis.0.03.lt.ave.pcoa.axes') %>%
   select(group, axis1, axis2) %>% rename(shared_names = group) %>% 
   right_join(metadata, by = "shared_names") # join with cleaned up metadata for day, mouse, treatment
 # Select O+, C+, and CO+ groups. Convert Group letter labels to more descriptive labels
 pcoa_subset <- pcoa_subset %>% filter(Group != "NA")
-
+# Plot of samples from omeprazole-treated mice before challenge
 pcoa_before_challenge <- pcoa_subset %>% 
   filter(day < 1, Group == "Omeprazole", Mouse.ID == as.factor(Mouse.ID)) %>%	
   ggplot(aes(x=axis1, y=axis2, color=Mouse.ID, shape=Mouse.ID)) +
