@@ -124,11 +124,22 @@ mothur code/ppi_alpha_beta.batch
 Run dist.shared and generate PCoA for 1B using just a subset of samples (Omeprazole treated mice before *C. difficile* challenge, see code/ppi_taxa.R file for list of samples).
 ```
 mothur
-set.dir(input=data/mothur, output=data/mothur/subset)
+set.dir(input=data/mothur, output=data/mothur/subset_1)
 # Run dist.shared on a subet of samples, specified with groups=
 dist.shared(shared=ppi.opti_mcc.shared, calc=thetayc-jclass-braycurtis, subsample=3000, groups=Opos+M1+D0-Opos+M2+D0-Opos+M3+D0-Opos+M4+D0-Opos+M5+D0-Opos+M1+D2-Opos+M2+D2-Opos+M3+D2-Opos+M4+D2-Cpos+M5+D-Opos+M1+D4-Opos+M3+D4-Opos+M4+D4-Opos+M5+D4-Opos+M11+D6-Opos+M2+D6-Opos+M3+D-Opos+M4+D6-Opos+M5+D6-Opos+M1+D7-Opos+M2+D7-Opos+M3+D7-Opos+M4+D7-Opos+M5+D7)
 # Generate PCoA based on Bray-Curtis distance
-set.dir(input=data/mothur/subset, output=data/mothur/subset)
+set.dir(input=data/mothur/subset_1, output=data/mothur/subset_1)
+pcoa(phylip=ppi.opti_mcc.braycurtis.0.03.lt.ave.dist)
+```
+
+Run dist.shared and generate PCoA for 2B using just a subset of samples (Samples from all treatment groups after *C. difficile* challenge, see code/ppi_taxa.R file for list of samples).
+```
+mothur
+set.dir(input=data/mothur, output=data/mothur/subset_2)
+# Run dist.shared on a subet of samples, specified with groups=
+dist.shared(shared=ppi.opti_mcc.shared, calc=thetayc-jclass-braycurtis, subsample=3000, groups=Opos+M1+D8-Opos+M2+D8-Opos+M3+D8-Opos+M4+D8-Opos+M5+D8-COpos+M6+D8-COpos+M7+D7-COpos+M8+D8-COpos+M9+D-COpos+M10+D6+unk-Cpos+M11+D8-Cpos+M12+D8-Cpos+M13+D-Cpos+M14-Opos+M2+D9-Opos+M3+D9-Opos+M4+D9-Opos+M5+D9-COpos+M6+D9-COpos+M7+D9-COpos+M8+D9-COpos+M9+D9-COpos+M10+D9-Cpos+M11+D9-Cpos+M12+D9-Cpos+M13+D9-Cpos+M14+D9-Opos+M1+D10-Opos+M2+D10-Opos+M4+D10-Opos+M5+D10-COpos+M6+D10-COpos+M7+D10-COpos+M8+D10-COpos+M9+D10-COpos+M10+D10-Cpos+M11+D10-Cpos+M12+D10-Opos+M13+D10-Cpos+M14+D10-Opos+M1+D12-Opos+M2+D12-Opos+M3+D12-Opos+M4+D12-Opos+M5+D12-COpos+M6+D12-COpos+M7+D12-COpos+M8+D12-COpos+M9+D12-COpos+M10+D12-Cpos+M11+D12-Cpos+M12+D12-Cpos+M13+D12-Cpos+M14+D12-Opos+M1+D16-Opos+M2+D16-Opos+M3+D16-Opos+M4+D16-Opos+M5+D16-COpos+M6+D16-COpos+M7+D16-COpos+M8+D16-COpos+M9+D16-COpos+M10+D16-Cpos+M11+D16-Cpos+M12+D16-Cpos+M13+D16-Cpos+M14+D16)
+# Generate PCoA based on Bray-Curtis distance
+set.dir(input=data/mothur/subset_2, output=data/mothur/subset_2)
 pcoa(phylip=ppi.opti_mcc.braycurtis.0.03.lt.ave.dist)
 ```
 #### Generate statisical analysis and plots for the paper
