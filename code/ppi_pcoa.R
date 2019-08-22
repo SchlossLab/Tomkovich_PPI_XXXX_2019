@@ -1,18 +1,5 @@
 #####################
-# 
-# analysis of experiment - Treat mice with abx and/or PPI and challenge with C difficile
-# 
-# input:
-#	data/mothur/ppi.opti_mcc.braycurtis.0.03.lt.ave.pcoa.axes
-# data/mothur/ppi.opti_mcc.braycurtis.0.03.lt.ave.dist
-#	data/process/ppi_metadata.txt
-#
-# output:
-#	pcoa plots
-#		
-#
-#####################
-
+#Setup----
 library(tidyverse)
 library(cowplot)
 

@@ -55,6 +55,7 @@ Proton pump inhibitor (PPI) use has been associated with microbiota alterations 
   * tidyverse v1.2.1
   * cowplot v.0.9.3
   * magick v.2.0
+  * broom v0.5.0
 * Analysis assumes the use of 8 processors
 
 
