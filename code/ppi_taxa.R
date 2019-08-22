@@ -20,7 +20,7 @@ library(broom)
 library(cowplot)
 
 # Define color palette:
-color_scheme <- c("#d95f02", "#1b9e77", "#7570b3")
+color_scheme <- c("#d95f02", "#1b9e77",  "#7570b3")
 color_ppi <-  c("#7570b3") # Use for graphs looking at just the PPI group over time
 color_cppi <- c("#1b9e77") # Use for graphs looking at just the Clindamycin + PPI group over time
 color_c <- c("#d95f02") # Use for graphs looking at just the Clindamycin group over time
@@ -28,7 +28,8 @@ color_day <- c('#c7c5e0' ,"#7570b3", "#514e7d") # Tints and Shades of PPI color 
 
 # Import metadata into data frame
 metadata <- read.table('data/process/ppi_metadata.txt', header = T, sep = '\t', stringsAsFactors = F) %>% 
-  filter(Group != "NA") #Exclude the mock community
+  filter(Group != "NA") %>% #Exclude the mock community
+  mutate(Group=factor(Group, levels=c("Clindamycin", "Clind. + Omep.", "Omeprazole"))) # make sure Group is treated as a factor
 
   
 # Import taxonomy into data frame and clean up taxonomy names
@@ -53,9 +54,7 @@ rarefy <- read_tsv(file="data/mothur/ppi.opti_mcc.groups.rarefaction") %>%
 
 #Join metadata to rarefy data frame
 metadata_rarefy <- inner_join(metadata, rarefy, by = c("shared_names" = "sample")) %>% 
-  filter(Group != "NA") %>% 
-  mutate(Group = as.factor(Group)) # make sure Group is treated as a factor
-
+  filter(Group != "NA") 
 
 #Plotting----
 #Plot rarefaction curves, the more parallel the curves to the x axis, the more confident you can be in the results
@@ -100,7 +99,10 @@ agg_phylum_data %>%
   filter(phylum %in% top_phyla) %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
   ggplot(aes(x= reorder(phylum, agg_rel_abund), y=agg_rel_abund, color=Group))+
-  scale_colour_manual(values=color_scheme) +
+  scale_colour_manual(name=NULL, 
+                      values=color_scheme, 
+                      breaks=c("Clindamycin", "Clind. + Omep.", "Omeprazole"),
+                      labels=c("Clindamycin", "Clind. + Omep.", "Omeprazole")) +
   geom_hline(yintercept=1/3000, color="gray")+
   geom_boxplot(outlier.shape = NA)+
   geom_jitter(shape=19, size=1, alpha=0.4, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2)) +
@@ -274,6 +276,7 @@ ppi_family_plot_neg7 <- agg_family_data %>%
   coord_flip()+
   theme_classic()+
   theme(plot.title=element_text(hjust=0.5))+
+  theme(axis.text.y = element_text(face = "italic"))+ #Have the families show up as italics
   theme(plot.title=element_text(hjust=0.5))+
   theme(legend.position = c(0.9, 0.2)) #Move legend position
 save_plot("results/figures/families_prev_assoc_w_PPIs_-7.png", ppi_family_plot_neg7, base_aspect_ratio = 2)
@@ -298,6 +301,7 @@ ppi_family_plot_day0 <- agg_family_data %>%
   theme_classic()+
   theme(plot.title=element_text(hjust=0.5))+
   theme(plot.title=element_text(hjust=0.5))+
+  theme(axis.text.y = element_text(face = "italic"))+ #Have the families show up as italics
   theme(legend.position = c(0.9, 0.2)) #Move legend position
 save_plot("results/figures/families_prev_assoc_w_PPIs_0.png", ppi_family_plot_day0, base_aspect_ratio = 2)
 
@@ -348,6 +352,7 @@ sig_genus_day9 <- genus_tests_day9 %>%
 top_6_genera_across_groups <- top_n(genus_tests_day2, -6, p.value.adj) %>%  #negative to pull rows with the lowest values
   pull(genus)
 
+# Figure 2C----
 #Graph the top 6 genera based on treatment groups, no genera are significant after Benjamini-Hochburg correction
 group_genera <- agg_genus_data %>% 
   filter(genus %in% top_6_genera_across_groups) %>% 
@@ -374,7 +379,7 @@ save_plot("results/figures/genera_assoc_w_treatment.png", group_genera, base_asp
 #Kruskal_wallis test with Benjamini-Hochburg correction for phylum differences across time in the PPI treatment group 
 ppi_phylum_tests <- agg_phylum_data %>% 
   group_by(phylum) %>% 
-  filter(Group == "PPI", day %in% c("-7", "0", "9")) %>%
+  filter(Group == "Omeprazole", day %in% c("-7", "0", "9")) %>%
   do(tidy(kruskal.test(agg_rel_abund~factor(day), data=.))) %>% ungroup() %>% 
   mutate(p.value.adj=p.adjust(p.value, method="BH")) %>% 
   arrange(p.value.adj)
@@ -387,7 +392,7 @@ ppi_sig_phyla <- ppi_phylum_tests %>%
 #Graph the significant phyla over time in the PPI treatment group after Benjamini-Hochburg correction
 ppi_phyla_time <- agg_phylum_data %>% 
   filter(phylum %in% ppi_sig_phyla) %>% 
-  filter(Group == "PPI", day %in% c("-7", "0", "9")) %>%
+  filter(Group == "Omeprazole", day %in% c("-7", "0", "9")) %>%
   mutate(phylum=factor(phylum, levels=ppi_sig_phyla)) %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
   ggplot(aes(x= reorder(phylum, agg_rel_abund), y=agg_rel_abund, color=Group))+
@@ -405,7 +410,7 @@ ppi_phyla_time <- agg_phylum_data %>%
 #Kruskal_wallis test for family differences across time in the PPI group with Benjamini-Hochburg correction 
 ppi_family_tests <- agg_family_data %>% 
   group_by(family) %>% 
-  filter(Group == "PPI", day %in% c("-7", "0", "9")) %>%
+  filter(Group == "Omeprazole", day %in% c("-7", "0", "9")) %>%
   do(tidy(kruskal.test(agg_rel_abund~factor(day), data=.))) %>% ungroup() %>% 
   mutate(p.value.adj=p.adjust(p.value, method="BH")) %>% 
   arrange(p.value.adj)
@@ -446,7 +451,7 @@ save_plot("results/figures/ppi_family_time.png", ppi_family_time, base_aspect_ra
 #Kruskal_wallis test for genus differences across time in the PPI group with Benjamini-Hochburg correction 
 ppi_genus_tests <- agg_genus_data %>% 
   group_by(genus) %>% 
-  filter(Group == "PPI", day %in% c("-7", "0", "9")) %>%
+  filter(Group == "Omeprazole", day %in% c("-7", "0", "9")) %>%
   do(tidy(kruskal.test(agg_rel_abund~factor(day), data=.))) %>% ungroup() %>% 
   mutate(p.value.adj=p.adjust(p.value, method="BH")) %>% 
   arrange(p.value.adj)
@@ -463,7 +468,7 @@ top_13_ppi <- top_n(ppi_genus_tests, -13, p.value.adj) %>%  #negative to pull ro
 #Graph the 13 genera with the lowest Benjamini-Hochburg corrected P-values across time in the PPI group
 ppi_genus_time <- agg_genus_data %>% 
   filter(genus %in% top_13_ppi) %>% 
-  filter(Group == "PPI", day %in% c("-7", "0", "9")) %>%
+  filter(Group == "Omeprazole", day %in% c("-7", "0", "9")) %>%
   mutate(genus=factor(genus, levels=top_13_ppi)) %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>% 
   ggplot(aes(x= reorder(genus, agg_rel_abund), y=agg_rel_abund, color = factor(day, ordered = TRUE, levels =c("-7", "0", "9"))))+
@@ -517,7 +522,7 @@ ruminoc_genus_time <- agg_genus_data %>%
   filter(genus == "Ruminococcus") %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
   select(Group, day, agg_rel_abund, genus) %>% 
-##  filter(Group == "PPI") %>%
+##  filter(Group == "Omeprazole") %>%
   ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
   scale_colour_manual(values=color_scheme) +
   scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
@@ -530,7 +535,7 @@ enteroc_genus_time <- agg_genus_data %>%
   filter(genus == "Enterococcus") %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
   select(Group, day, agg_rel_abund, genus) %>% 
-##  filter(Group == "PPI") %>%
+##  filter(Group == "Omeprazole") %>%
   ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
   scale_colour_manual(values=color_scheme) +
   scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
@@ -544,7 +549,7 @@ strep_genus_time <- agg_genus_data %>%
   filter(genus == "Streptococcus") %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
   select(Group, day, agg_rel_abund, genus) %>% 
-  filter(Group == "PPI") %>%
+  filter(Group == "Omeprazole") %>%
   ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
   scale_colour_manual(values=color_ppi) +
   scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
@@ -558,7 +563,7 @@ enteroc_family_time <- agg_family_data %>%
   filter(family == "Enterococcaceae") %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
   select(Group, day, agg_rel_abund, family) %>% 
-  filter(Group == "PPI") %>%
+  filter(Group == "Omeprazole") %>%
   ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
   scale_colour_manual(values=color_ppi) +
   scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
@@ -591,15 +596,15 @@ lacto_family_time <- ggplot(NULL)+
        y="Relative abundance (%)") +
   scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
   theme_classic()+
-  theme(plot.title=element_text(hjust=0.5))+
-  theme(legend.title=element_blank(), legend.position = c(0.12, 0.27))+
-  save_plot("results/figures/lactobacillaceae_time.png", lacto_family_time, base_aspect_ratio = 2.4)
+  theme(plot.title=element_text(hjust=0.5, face = "italic"))+
+  theme(legend.title=element_blank(), legend.position = c(0.12, 0.24))
+save_plot("results/figures/lactobacillaceae_time.png", lacto_family_time, base_aspect_ratio = 2.4)
 
  mi_family_time <- agg_family_data %>% 
   filter(family == "Micrococcaceae") %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
   select(Group, day, agg_rel_abund, family) %>% 
-  filter(Group == "PPI") %>%
+  filter(Group == "Omeprazole") %>%
   ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
   scale_colour_manual(values=color_ppi) +
   scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
@@ -612,7 +617,7 @@ staph_family_time <- agg_family_data %>%
   filter(family == "Staphylococcaeae") %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
   select(Group, day, agg_rel_abund, family) %>% 
-  filter(Group == "PPI") %>%
+  filter(Group == "Omeprazole") %>%
   ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
   scale_colour_manual(values=color_ppi) +
   scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
@@ -625,7 +630,7 @@ strep_family_time <- agg_family_data %>%
   filter(family == "Streptococcaceae") %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
   select(Group, day, agg_rel_abund, family) %>% 
-  filter(Group == "PPI") %>%
+  filter(Group == "Omeprazole") %>%
   ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
   scale_colour_manual(values=color_ppi) +
   scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
@@ -658,14 +663,14 @@ rumino_family_time <- ggplot(NULL)+
        y="Relative abundance (%)") +
   scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
   theme_classic()+
-  theme(plot.title=element_text(hjust=0.5))+
-  theme(legend.title=element_blank(), legend.position = c(0.9, 0.2))+
-  save_plot("results/figures/ruminococcaceae_time.png", rumino_family_time, base_aspect_ratio = 2.4)
+  theme(plot.title=element_text(hjust=0.5, face = "italic"))+
+  theme(legend.title=element_blank(), legend.position = c(0.9, 0.2))
+save_plot("results/figures/ruminococcaceae_time.png", rumino_family_time, base_aspect_ratio = 2.4)
 
 l_family_time <- agg_family_data %>% filter(family == "Lachnospiraceae") %>% 
   mutate(agg_rel_abund = agg_rel_abund + 1/6000) %>%
   select(Group, day, agg_rel_abund, family) %>% 
-  filter(Group == "PPI") %>%
+  filter(Group == "Omeprazole") %>%
   ggplot(aes(x=day, y=agg_rel_abund, group=Group, color=Group))+
   scale_colour_manual(values=color_ppi) +
   scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+

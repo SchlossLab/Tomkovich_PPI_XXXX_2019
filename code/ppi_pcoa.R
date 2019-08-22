@@ -177,11 +177,8 @@ pcoa_after_challenge <- pcoa %>%
   labs(alpha = "Day")+
   geom_point() +
   theme_classic() +
-  xlim(-0.62, 0.62)+
-  ylim(-0.66, 0.66)+
   labs(x = "PCoA 1",
        y = "PCoA 2") +
   theme(plot.title = element_text(hjust = 0.5))+
-  theme(legend.position = c(0.90, 0.5)) #Move legend position
 save_plot("results/figures/after_abx_C.diff.png", pcoa_after_challenge, base_aspect_ratio = 2)
 

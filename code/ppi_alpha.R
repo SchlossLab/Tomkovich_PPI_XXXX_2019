@@ -11,15 +11,16 @@ alpha <- read_tsv(file="data/mothur/ppi.opti_mcc.groups.ave-std.summary",
 
 # Import metadata into data frame
 metadata <- read.table('data/process/ppi_metadata.txt', header = T, sep = '\t', stringsAsFactors = F) %>% 
-  filter(Group != "NA") #Exclude the mock community
+  filter(Group != "NA") %>% #Exclude the mock community
+  mutate(Group=factor(Group, levels=c("Clindamycin", "Clind. + Omep.", "Omeprazole"))) 
+
 
 # Combine metadata with alpha data frame
 meta_alpha <- inner_join(metadata, alpha, by=c('shared_names'='group')) %>% 
-  select(Group, sobs, shannon, day) %>% 
-  mutate(Group = as.factor(Group)) # make sure Group is treated as a factor
+  select(Group, sobs, shannon, day) 
 
 # Define color palette:
-color_scheme <- c("#d95f02", "#1b9e77", "#7570b3")
+color_scheme <- c("#d95f02", "#1b9e77",  "#7570b3")
 color_ppi <-  c("#7570b3") # Use for graphs looking at just the PPI group over time
 
 # Boxplots of shannon index (measure of community diversity) across treatment groups
@@ -82,7 +83,7 @@ b <- meta_alpha %>%
 
 # Linegraph of sobs (observed community richness) over time within the PPI group
 e <- meta_alpha %>% 
-  filter(Group == "PPI") %>% 
+  filter(Group == "Omeprazole") %>% 
   select(Group, day, sobs) %>% 
   ggplot(aes(x=day, y=sobs, group=Group, color=Group))+
   scale_colour_manual(values=color_ppi) +
@@ -94,7 +95,7 @@ e <- meta_alpha %>%
 
 #Test if Shannon diversity and richness is significantly different over D-7, 0, and 9 of the experiment
 ppi_day_alpha <- meta_alpha %>% 
-  filter( Group == "PPI") %>% # select just PPI group 
+  filter( Group == "Omeprazole") %>% # select just PPI group 
   filter(day == -7 | day == 0 | day ==9) %>% # select -7, 0, and -9 timepoints (beginning, middle and end of the experiment)
   mutate(day = as.factor(day))# turn day into factor so we can do post hoc comparisons
 
@@ -140,7 +141,7 @@ pairwise.wilcox.test(g=clind_day_alpha[["day"]], x=clind_day_alpha[["sobs"]], p.
 
 #Test if Shannon diversity and richness is significantly different over D-7, 0, and 9 of the experiment within the clindamycin + PPI group----
 clindPPI_day_alpha <- meta_alpha %>% 
-  filter( Group == "Clindamycin + PPI") %>% # select clindamycin + PPI
+  filter( Group == "Clind. + Omep.") %>% # select clindamycin + PPI
   filter(day == -7 | day == 0 | day ==9) %>% # select -7, 0, and -9 timepoints (beginning, middle and end of the experiment)
   mutate(day = as.factor(day))# turn day into factor so we can do post hoc comparisons
 
@@ -173,8 +174,8 @@ c <- groups_day_alpha %>%
   ggplot(aes(x= day, y=shannon, colour=Group)) +
   scale_colour_manual(name=NULL, 
                       values=color_scheme, 
-                      breaks=c("Clindamycin", "Clindamycin + PPI", "PPI"),
-                      labels=c("Clindamycin", "Clindamycin + PPI", "PPI")) +
+                      breaks=c("Clindamycin", "Clind. + Omep.", "Omeprazole"),
+                      labels=c("Clindamycin", "Clind. + Omep.", "Omeprazole")) +
   geom_boxplot(outlier.shape = NA)+
   geom_jitter(shape=19, size=1, alpha=0.4, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.1), show.legend = FALSE) +
   labs(title=NULL, 
@@ -191,8 +192,8 @@ f <- groups_day_alpha %>%
   ggplot(aes(x= day, y=sobs, colour=Group)) +
   scale_colour_manual(name=NULL, 
                       values=color_scheme, 
-                      breaks=c("Clindamycin", "Clindamycin + PPI", "PPI"),
-                      labels=c("Clindamycin", "Clindamycin + PPI", "PPI")) +
+                      breaks=c("Clindamycin", "Clind. + Omep.", "Omeprazole"),
+                      labels=c("Clindamycin", "Clind. + Omep.", "Omeprazole")) +
   geom_boxplot(outlier.shape = NA)+
   geom_jitter(shape=19, size=1, alpha=0.4, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.1), show.legend = FALSE) +
   labs(title=NULL, 

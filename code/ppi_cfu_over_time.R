@@ -3,7 +3,7 @@ library(tidyverse)
 library(cowplot)
 
 # Define color palette:
-color_scheme <- c("#d95f02", "#1b9e77", "#7570b3")
+color_scheme <- c("#d95f02", "#1b9e77",  "#7570b3")
 
 # Import metadata into data frame
 metadata <- read.table('data/process/ppi_metadata.txt', header = T, sep = '\t', stringsAsFactors = F) %>% 
@@ -24,7 +24,7 @@ fancy_scientific <- function(l) {
 #Create data frame of CFU data by selecting group column & columns ending with CFU/g
 ppi_cfu <- select(metadata, Group, ends_with("CFU.g")) %>% 
   gather(Day, CFU, -Group) %>% 
-  mutate(Group=factor(Group, levels=c("Clindamycin", "Clindamycin + PPI", "PPI")),
+  mutate(Group=factor(Group, levels=c("Clindamycin", "Clind. + Omep.", "Omeprazole")),
          Day = as.numeric(str_replace(Day, "^[^.](\\d\\d?)[\\w\\.\\s\\/]+", "\\1")),
          Day = Day - 7, #Modify day notation so that C. difficile challenge day is represented as day 0.
          CFU=as.numeric(CFU) + 1) %>% 
@@ -44,7 +44,10 @@ title <-c(expression(paste(italic("C. difficile"), " colonization over time"))) 
 cfu_time <- ggplot(NULL) + 
   geom_point(ppi_cfu, mapping = aes(x= Day, y = CFU, color=Group, fill=Group), alpha = .04, size = 2, shape = 20, show.legend = FALSE, position = position_dodge(width = 0.6))+
   geom_line(ppi_cfu_summary, mapping = aes(x=Day, y=mean, color=Group))+
-  scale_colour_manual(values=color_scheme) +
+  scale_colour_manual(name=NULL, 
+                      values=color_scheme, 
+                      breaks=c("Clindamycin", "Clind. + Omep.", "Omeprazole"),
+                      labels=c("Clindamycin", "Clind. + Omep.", "Omeprazole"))+
   geom_linerange(show.legend=FALSE)+
   geom_hline(yintercept = 100, linetype=2) +
   labs(x='Days Post-Infection', y='CFU/g Feces')+

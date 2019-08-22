@@ -34,9 +34,9 @@ metadata <- read_xlsx('data/raw/PPI_metadata.xlsx') %>%
   # convert names of seq to match the format of the shared samples
   mutate(shared_names = gsub('^_{1,3}','', Plate_label),
          shared_names = gsub('_', '+', shared_names)) %>% 
-  mutate(Group = case_when(Group == 'O+' ~ 'PPI', #make group names more readable
+  mutate(Group = case_when(Group == 'O+' ~ 'Omeprazole', #make group names more readable
                            Group == 'C+' ~ 'Clindamycin',
-                           Group == 'CO+' ~ 'Clindamycin + PPI')) 
+                           Group == 'CO+' ~ 'Clind. + Omep.')) 
   # select only the samples that are present in the shared data
 matching <- inner_join(metadata, shared_sample_names, by = c('shared_names' = 'Group')) 
 
