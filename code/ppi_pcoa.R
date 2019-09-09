@@ -42,7 +42,6 @@ pcoa_subset1 <- read_tsv('data/mothur/subset_1/ppi.opti_mcc.braycurtis.0.03.lt.a
 pcoa_before_challenge <- pcoa_subset1 %>% 
   filter(day < 1, Group == "Omeprazole", Mouse.ID == as.factor(Mouse.ID)) %>%	
   ggplot(aes(x=axis1, y=axis2, color=Mouse.ID, shape=Mouse.ID)) +
-  labs(color = "Omeprazole Mice")+
   scale_color_manual(name="Omeprazole Mice", values=color_mouse) + 
   scale_shape_manual(name= "Omeprazole Mice", values=shape_mouse)+
   geom_point() +
@@ -53,7 +52,7 @@ pcoa_before_challenge <- pcoa_subset1 %>%
   xlim(-0.4, 0.4)+
   ylim(-0.4, 0.4)+
   theme(plot.title = element_text(hjust = 0.5)) +
-  theme(legend.position = c(0.15, 0.8)) #Move legend position
+  theme(legend.position = "none") #Remove
 save_plot("results/figures/before_C._diff_challenge.png", pcoa_before_challenge, base_aspect_ratio = 2) #Use save_plot over ggsave because it works better with cowplot
 
 # Figure 2B----
