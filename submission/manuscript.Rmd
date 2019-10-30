@@ -1,14 +1,14 @@
 ---
 bibliography: references.bib
-csl: mbio.csl
+csl: msphere.csl
 fontsize: 11pt
 geometry: margin=1.0in
 output:
-  word_document: default
   pdf_document:
     includes:
       in_header: header.tex
     keep_tex: yes
+  word_document: default
 ---
 
 ```{r knitr_settings, tidy=TRUE, eval=TRUE, echo=FALSE, cache=FALSE}
