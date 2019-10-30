@@ -11,7 +11,7 @@ output:
   word_document: default
 ---
 
-```{r knitr_settings, tidy=TRUE, eval=TRUE, echo=FALSE, cache=FALSE}
+```{r knitr_settings, tidy=TRUE, eval=TRUE, warning = FALSE, echo=FALSE, cache=FALSE}
 options(tidyverse.quiet = TRUE)
 
 library(tidyverse)
