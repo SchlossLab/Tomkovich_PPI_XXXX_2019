@@ -118,8 +118,8 @@ ppi_family_plot_neg7 <- agg_family_data %>%
   ggplot(aes(x= reorder(family, agg_rel_abund), y=agg_rel_abund, color=Group))+
   scale_colour_manual(values=color_scheme) +
   geom_hline(yintercept=1/3000, color="gray")+
-  geom_boxplot(outlier.shape = NA)+
-  geom_jitter(shape=19, size=1, alpha=0.4, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2)) +
+  geom_boxplot(outlier.shape = NA, size = 1.2)+
+  geom_jitter(shape=19, size=2, alpha=0.6, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2)) +
   labs(title=NULL, 
        x=NULL,
        y="Relative abundance (%)",
@@ -130,7 +130,8 @@ ppi_family_plot_neg7 <- agg_family_data %>%
   theme(plot.title=element_text(hjust=0.5))+
   theme(axis.text.y = element_text(face = "italic"))+ #Have the families show up as italics
   theme(plot.title=element_text(hjust=0.5))+
-  theme(legend.position = c(0.9, 0.2)) #Move legend position
+  theme(legend.position = c(0.85, 0.2)) + #Move legend position
+  theme(text = element_text(size = 16))  # Change font size for entire plot
 save_plot("results/figures/families_prev_assoc_w_PPIs_-7.png", ppi_family_plot_neg7, base_aspect_ratio = 2)
 
 # Figure 1D----
@@ -142,8 +143,8 @@ ppi_family_plot_day0 <- agg_family_data %>%
   ggplot(aes(x= reorder(family, agg_rel_abund), y=agg_rel_abund, color=Group))+
   scale_colour_manual(values=color_scheme) +
   geom_hline(yintercept=1/3000, color="gray")+
-  geom_boxplot(outlier.shape = NA)+
-  geom_jitter(shape=19, size=1, alpha=0.4, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2)) +
+  geom_boxplot(outlier.shape = NA, size = 1.2)+
+  geom_jitter(shape=19, size=2, alpha=0.6, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2)) +
   labs(title=NULL, 
        x=NULL,
        y="Relative abundance (%)",
@@ -154,7 +155,8 @@ ppi_family_plot_day0 <- agg_family_data %>%
   theme(plot.title=element_text(hjust=0.5))+
   theme(plot.title=element_text(hjust=0.5))+
   theme(axis.text.y = element_text(face = "italic"))+ #Have the families show up as italics
-  theme(legend.position = c(0.9, 0.2)) #Move legend position
+  theme(legend.position = c(0.85, 0.2)) + #Move legend position
+  theme(text = element_text(size = 16))  # Change font size for entire plot
 save_plot("results/figures/families_prev_assoc_w_PPIs_0.png", ppi_family_plot_day0, base_aspect_ratio = 2)
 
 # FDR corrected P values for these families analyzed at day -7 & day 0
@@ -215,8 +217,8 @@ group_genera <- agg_genus_data %>%
   scale_colour_manual(name="Day 2",
                       values=color_scheme) +
   geom_hline(yintercept=1/3000, color="gray")+
-  geom_boxplot(outlier.shape = NA)+
-  geom_jitter(shape=19, size=1, alpha=0.4, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2)) +
+  geom_boxplot(outlier.shape = NA, size = 1.2)+
+  geom_jitter(shape=19, size=2, alpha=0.6, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.2)) +
   labs(title=NULL, 
        x=NULL,
        y="Relative abundance (%)")+
@@ -225,7 +227,8 @@ group_genera <- agg_genus_data %>%
   theme_classic()+
   theme(axis.text.y = element_text(face = "italic"))+ #Have the genera show up as italics
   theme(plot.title=element_text(hjust=0.5))+
-  theme(legend.position = c(0.85, 0.2)) #Ger rid of legend title & move legend position
+  theme(legend.position = c(0.85, 0.2)) + #Get rid of legend title & move legend position
+  theme(text = element_text(size = 16))  # Change font size for entire plot
 save_plot("results/figures/genera_assoc_w_treatment.png", group_genera, base_aspect_ratio = 2)
    
 #Kruskal_wallis test for family differences across time in the PPI group with Benjamini-Hochburg correction---- 
@@ -273,8 +276,8 @@ lacto_family_mice <-  agg_family_data %>%
 
 #Plot of Lactobacillaceae family relative abundance over time with mean relative abundance summary line and individual mouse relative abundance points
 lacto_family_time <- ggplot(NULL)+
-  geom_point(lacto_family_mice, mapping = aes(x=day, y=agg_rel_abund, color=Group, alpha = .2), show.legend = FALSE)+
-  geom_line(lacto_family_mean, mapping = aes(x=day, y=mean, color=Group))+
+  geom_point(lacto_family_mice, mapping = aes(x=day, y=agg_rel_abund, color=Group, alpha = .2), show.legend = FALSE, size = 2.5)+
+  geom_line(lacto_family_mean, mapping = aes(x=day, y=mean, color=Group), size = 1)+
   scale_colour_manual(values=color_scheme) +
   geom_hline(yintercept=1/3000, color="gray")+
   labs(title="Lactobacillaceae",
@@ -283,8 +286,9 @@ lacto_family_time <- ggplot(NULL)+
   scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
   theme_classic()+
   theme(plot.title=element_text(hjust=0.5, face = "italic"))+
-  theme(legend.title=element_blank(), legend.position = c(0.12, 0.24))
-save_plot("results/figures/lactobacillaceae_time.png", lacto_family_time, base_aspect_ratio = 2.4)
+  theme(legend.title=element_blank(), legend.position = c(0.12, 0.22))+
+  theme(text = element_text(size = 16))  # Change font size for entire plot
+save_plot("results/figures/lactobacillaceae_time.png", lacto_family_time, base_aspect_ratio = 2)
 
 # Figure S1B---- 
 #Ruminococcaceae family relative abundance over time with mean relative abundance summary line and individual mouse relative abundance points
@@ -301,8 +305,8 @@ rumino_family_mice <-  agg_family_data %>%
   select(Group, day, agg_rel_abund, family)
 #Plot of Ruminococcaceae family relative abundance over time with mean relative abundance summary line and individual mouse relative abundance points
 rumino_family_time <- ggplot(NULL)+
-  geom_point(rumino_family_mice, mapping = aes(x=day, y=agg_rel_abund, color=Group, alpha = .2), show.legend = FALSE)+
-  geom_line(rumino_family_mean, mapping = aes(x=day, y=mean, color=Group))+
+  geom_point(rumino_family_mice, mapping = aes(x=day, y=agg_rel_abund, color=Group, alpha = .2), show.legend = FALSE, size = 2.5)+
+  geom_line(rumino_family_mean, mapping = aes(x=day, y=mean, color=Group), size = 1)+
   scale_colour_manual(values=color_scheme) +
   geom_hline(yintercept=1/3000, color="gray")+
   labs(title="Ruminococcaceae",
@@ -311,8 +315,9 @@ rumino_family_time <- ggplot(NULL)+
   scale_y_log10(breaks=c(1e-4, 1e-3, 1e-2, 1e-1, 1), labels=c(1e-2, 1e-1, 1, 10, 100))+
   theme_classic()+
   theme(plot.title=element_text(hjust=0.5, face = "italic"))+
-  theme(legend.title=element_blank(), legend.position = c(0.9, 0.2))
-save_plot("results/figures/ruminococcaceae_time.png", rumino_family_time, base_aspect_ratio = 2.4)
+  theme(legend.title=element_blank(), legend.position = c(0.9, 0.2))+
+  theme(text = element_text(size = 16))  # Change font size for entire plot
+save_plot("results/figures/ruminococcaceae_time.png", rumino_family_time, base_aspect_ratio = 2)
 
 
 

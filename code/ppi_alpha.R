@@ -106,14 +106,15 @@ shannon <- groups_day_alpha %>%
                       values=color_scheme, 
                       breaks=c("Clindamycin", "Clind. + Omep.", "Omeprazole"),
                       labels=c("Clindamycin", "Clind. + Omep.", "Omeprazole")) +
-  geom_boxplot(outlier.shape = NA)+
-  geom_jitter(shape=19, size=1, alpha=0.4, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.1), show.legend = FALSE) +
+  geom_boxplot(outlier.shape = NA, size = 1.2)+
+  geom_jitter(shape=19, size=2, alpha=0.6, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.1), show.legend = FALSE) +
   labs(title=NULL, 
        x="Day",
        y="Shannon Diversity Index")+
   ylim(0, 3.5)+
   theme_classic()+
-  theme(legend.position = c(0.8, 0.2))
+  theme(legend.position = c(0.8, 0.2))+
+  theme(text = element_text(size = 16))  # Change font size for entire plot
 save_plot("results/figures/groups_shannon.png", shannon) #Use save_plot instead of ggsave because it works better with cowplot
 
 # Figure S2B----
@@ -124,14 +125,15 @@ richness <- groups_day_alpha %>%
                       values=color_scheme, 
                       breaks=c("Clindamycin", "Clind. + Omep.", "Omeprazole"),
                       labels=c("Clindamycin", "Clind. + Omep.", "Omeprazole")) +
-  geom_boxplot(outlier.shape = NA)+
-  geom_jitter(shape=19, size=1, alpha=0.4, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.1), show.legend = FALSE) +
+  geom_boxplot(outlier.shape = NA, size = 1.2)+
+  geom_jitter(shape=19, size=2, alpha=0.6, position=position_jitterdodge(dodge.width=0.7, jitter.width=0.1), show.legend = FALSE) +
   labs(title=NULL, 
        x="Day",
        y="Number of Observed OTUs")+
   ylim(0, 100)+
   theme_classic()+
-  theme(legend.position = c(0.8, 0.2))
+  theme(legend.position = c(0.8, 0.2))+
+  theme(text = element_text(size = 16))  # Change font size for entire plot
 save_plot("results/figures/groups_richness.png", richness) #Use save_plot instead of ggsave because it works better with cowplot
 
 
