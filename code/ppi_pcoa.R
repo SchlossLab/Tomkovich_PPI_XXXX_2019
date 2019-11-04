@@ -44,15 +44,16 @@ pcoa_before_challenge <- pcoa_subset1 %>%
   ggplot(aes(x=axis1, y=axis2, color=Mouse.ID, shape=Mouse.ID)) +
   scale_color_manual(name="Omeprazole Mice", values=color_mouse) + 
   scale_shape_manual(name= "Omeprazole Mice", values=shape_mouse)+
-  geom_point() +
-  geom_path() +
+  geom_point(size = 4) +
+  geom_path(size = 1.5) +
   theme_classic()+
   labs(x = "PCoA 1",
        y = "PCoA 2") +
   xlim(-0.4, 0.4)+
   ylim(-0.4, 0.4)+
   theme(plot.title = element_text(hjust = 0.5)) +
-  theme(legend.position = "none") #Remove
+  theme(legend.position = "none") + #Remove
+  theme(text = element_text(size = 16))  # Change font size for entire plot
 save_plot("results/figures/before_C._diff_challenge.png", pcoa_before_challenge, base_aspect_ratio = 2) #Use save_plot over ggsave because it works better with cowplot
 
 # Figure 2B----
@@ -87,10 +88,11 @@ pcoa_after_challenge <- pcoa_subset2 %>%
                          breaks=c(1, 3, 6, 9),
                          labels=c(1, 3, 6, 9))+
   labs(alpha = "Day")+
-  geom_point() +
+  geom_point(size = 4) +
   theme_classic() +
   labs(x = "PCoA 1",
        y = "PCoA 2") +
-  theme(plot.title = element_text(hjust = 0.5))
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(text = element_text(size = 16))  # Change font size for entire plot
 save_plot("results/figures/after_abx_C.diff.png", pcoa_after_challenge, base_aspect_ratio = 2)
 

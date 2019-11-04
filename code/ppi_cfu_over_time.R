@@ -42,8 +42,8 @@ ppi_cfu_summary <- ppi_cfu %>%
 #Plot of mean CFU line with dots representing CFU of individual mice
 title <-c(expression(paste(italic("C. difficile"), " colonization over time"))) #Expression variable for the title so that bacteria name will be in italics
 cfu_time <- ggplot(NULL) + 
-  geom_point(ppi_cfu, mapping = aes(x= Day, y = CFU, color=Group, fill=Group), alpha = .04, size = 2, shape = 20, show.legend = FALSE, position = position_dodge(width = 0.6))+
-  geom_line(ppi_cfu_summary, mapping = aes(x=Day, y=mean, color=Group))+
+  geom_point(ppi_cfu, mapping = aes(x= Day, y = CFU, color=Group, fill=Group), alpha = .06, size = 3.5, shape = 20, show.legend = FALSE, position = position_dodge(width = 0.6))+
+  geom_line(ppi_cfu_summary, mapping = aes(x=Day, y=mean, color=Group), size = 1)+
   scale_colour_manual(name=NULL, 
                       values=color_scheme, 
                       breaks=c("Clindamycin", "Clind. + Omep.", "Omeprazole"),
@@ -55,5 +55,6 @@ cfu_time <- ggplot(NULL) +
   scale_y_log10(labels=fancy_scientific, breaks = c(10, 100, 10^3, 10^4, 10^5, 10^6, 10^7, 10^8, 10^9))+
   theme_classic()+
   theme(legend.position = c(.9, .8)) +
-  theme(legend.title=element_blank(), plot.title=element_text(hjust=0.5))
+  theme(legend.title=element_blank(), plot.title=element_text(hjust=0.5)) +
+  theme(text = element_text(size = 16))  # Change font size for entire plot
 save_plot("results/figures/ppi_cfu.png", cfu_time, base_aspect_ratio = 2)
